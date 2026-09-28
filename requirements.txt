@@ -1,0 +1,17 @@
+# Python 3.12; проверено на Linux, CUDA 13.0 (RTX 3070 Laptop, 8 ГБ). Для другой CUDA — сборка torch под свою видеокарту.
+torch==2.14.0
+sentence-transformers==6.1.0
+transformers==5.17.0
+pandas==3.0.6
+pyarrow==25.0.1
+numpy==2.5.3
+scipy==1.18.1
+scikit-learn==1.9.1
+bm25s==0.3.11
+PyStemmer==3.1.0
+pymorphy3==2.0.6
+pymorphy3-dicts-ru==2.4.417150.4580142
+dawg2-python==0.9.0
+lightgbm==4.7.0
+peft==0.21.0
+accelerate==1.15.0

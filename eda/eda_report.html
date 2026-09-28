@@ -1,0 +1,636 @@
+<title>EDA поиска услуг</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --page:#f5f6f3; --surface:#fcfcfb; --ink:#15171a; --ink-2:#4f504c; --muted:#77766f;
+  --grid:#e3e2db; --axis:#c3c2b7; --ring:rgba(11,11,11,.10); --wash:#eceee8;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --rest:#d6d5ce;
+  --good:#0ca30c; --warn:#b77f00; --crit:#d03b3b; --good-ink:#006300;
+  --chip-good:#e3f3e1; --chip-warn:#fbf0d6; --chip-crit:#fbe3e1;
+  --sans:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --page:#0f0f0e; --surface:#1a1a19; --ink:#f3f3f0; --ink-2:#c3c2b7; --muted:#96948d;
+    --grid:#2c2c2a; --axis:#44443f; --ring:rgba(255,255,255,.10); --wash:#232321;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --rest:#3a3a37;
+    --good:#0ca30c; --warn:#fab219; --crit:#e66767; --good-ink:#0ca30c;
+    --chip-good:#16301a; --chip-warn:#352a10; --chip-crit:#3a1c1c;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#0f0f0e; --surface:#1a1a19; --ink:#f3f3f0; --ink-2:#c3c2b7; --muted:#96948d;
+  --grid:#2c2c2a; --axis:#44443f; --ring:rgba(255,255,255,.10); --wash:#232321;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --rest:#3a3a37;
+  --good:#0ca30c; --warn:#fab219; --crit:#e66767; --good-ink:#0ca30c;
+  --chip-good:#16301a; --chip-warn:#352a10; --chip-crit:#3a1c1c;
+}
+*{box-sizing:border-box}
+body{background:var(--page);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55;padding-inline:16px;padding-block:32px 64px}
+.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
+h1,h2,h3{text-wrap:balance;margin:0;line-height:1.2}
+h1{font-size:clamp(28px,4.4vw,42px);font-weight:700;letter-spacing:-.01em}
+h2{font-size:clamp(22px,3vw,28px);font-weight:700}
+h3{font-size:16px;font-weight:600}
+p{margin:0;max-width:68ch}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:18px;color:var(--ink-2);max-width:62ch}
+header{display:flex;flex-direction:column;gap:14px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:13px;color:var(--muted)}
+.meta b{color:var(--ink-2);font-weight:500}
+section{display:flex;flex-direction:column;gap:20px}
+.sec-head{display:flex;flex-direction:column;gap:8px}
+.verdict{border-left:3px solid var(--s1);padding:10px 0 10px 16px;color:var(--ink);font-weight:500;max-width:70ch}
+
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media (max-width:820px){.tiles{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:440px){.tiles{grid-template-columns:1fr}}
+.tile{background:var(--surface);border:1px solid var(--ring);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:6px}
+.tile .num{font-size:36px;font-weight:700;letter-spacing:-.02em;line-height:1}
+.tile .num small{font-size:18px;font-weight:600;color:var(--ink-2)}
+.tile p{font-size:13.5px;color:var(--ink-2)}
+
+.card{background:var(--surface);border:1px solid var(--ring);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:820px){.grid2{grid-template-columns:1fr}}
+.note{font-size:13px;color:var(--muted)}
+.card h3 + .note{margin-top:-8px}
+
+/* files diagram */
+.files{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:12px}
+@media (max-width:760px){.files{grid-template-columns:1fr}}
+.file{background:var(--surface);border:1px solid var(--ring);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.file .fname{font-family:var(--mono);font-size:13px;font-weight:500}
+.file .rows{font-size:26px;font-weight:700;line-height:1}
+.file .rows span{font-size:13px;font-weight:400;color:var(--muted);margin-left:6px}
+.file p{font-size:13.5px;color:var(--ink-2)}
+.cols{display:flex;flex-wrap:wrap;gap:4px}
+.col{font-family:var(--mono);font-size:11px;padding:2px 6px;border-radius:4px;background:var(--wash);color:var(--ink-2)}
+.col.q{box-shadow:inset 2px 0 0 var(--s1)}
+.col.i{box-shadow:inset 2px 0 0 var(--s2)}
+
+/* charts */
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--ink-2)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.plot{display:grid;grid-template-columns:minmax(96px,34%) 1fr;row-gap:14px;column-gap:14px;padding-right:56px}
+.rl{font-size:13.5px;color:var(--ink);align-self:center;display:flex;flex-direction:column;gap:3px}
+.rl .sub{font-size:12px;color:var(--muted)}
+.track{position:relative;display:flex;flex-direction:column;gap:3px;justify-content:center;min-height:14px}
+.gl{position:absolute;top:-7px;bottom:-7px;width:1px;background:var(--grid)}
+.gl.zero{background:var(--axis)}
+.ref{position:absolute;top:-7px;bottom:-7px;width:0;border-left:2px dashed var(--ink-2);z-index:2}
+.line{position:relative;height:12px;z-index:1}
+.bar{position:absolute;left:0;top:0;height:12px;border-radius:0 4px 4px 0;min-width:2px;cursor:default}
+.bar:hover{filter:brightness(1.08)}
+.val{position:absolute;top:-2px;font-family:var(--mono);font-size:12px;color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
+.axis{position:relative;height:18px}
+.axis span{position:absolute;transform:translateX(-50%);font-family:var(--mono);font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.axis .reflab{color:var(--ink-2);top:0;transform:translateX(6px);font-weight:500}
+.axis-title{grid-column:2;font-size:12px;color:var(--muted);margin-top:-8px}
+
+.stack{display:flex;flex-direction:column;gap:6px}
+.stack-bar{display:flex;gap:2px;height:22px;border-radius:5px;overflow:hidden;background:var(--surface)}
+.stack-bar div{height:100%}
+.stack-lab{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13px;color:var(--ink-2)}
+.stack-lab b{font-family:var(--mono);font-weight:500;color:var(--ink);font-variant-numeric:tabular-nums}
+.stack-lab i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.stack-title{font-size:13.5px;font-weight:500}
+
+details.tv{font-size:13px}
+details.tv summary{cursor:pointer;color:var(--muted);width:max-content}
+details.tv summary:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+.tbl{overflow-x:auto;margin-top:8px}
+table{border-collapse:collapse;font-size:13px;width:100%}
+th,td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--grid);vertical-align:top}
+th{font-weight:600;color:var(--ink-2);font-size:12px}
+td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:500;padding:1px 7px;border-radius:999px;width:max-content}
+.chip.good{background:var(--chip-good);color:var(--good-ink)}
+.chip.warn{background:var(--chip-warn);color:var(--ink)}
+.chip.crit{background:var(--chip-crit);color:var(--crit)}
+.chip svg{width:11px;height:11px}
+
+.examples td:first-child{font-family:var(--mono);font-size:12.5px}
+.cause{font-size:12px;color:var(--muted)}
+
+/* pipeline */
+.pipe{display:grid;grid-template-columns:auto auto 1fr auto auto;align-items:center;gap:10px}
+@media (max-width:820px){.pipe{grid-template-columns:1fr}.pipe .arrow{transform:rotate(90deg);justify-self:center}}
+.node{background:var(--surface);border:1px solid var(--ring);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;font-size:13.5px}
+.node b{font-size:14px}
+.node span{color:var(--ink-2);font-size:12.5px}
+.node.io{background:var(--wash);border-style:dashed}
+.sources{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:440px){.sources{grid-template-columns:1fr}}
+.arrow{color:var(--muted);font-size:20px;line-height:1;text-align:center}
+
+.steps{display:flex;flex-wrap:wrap;gap:8px}
+.step{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;border:1px solid var(--ring);background:var(--surface);font-size:13.5px}
+.step .k{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.step.done{color:var(--ink-2)}
+.step.done .k{color:var(--good-ink)}
+.step.next{border-color:var(--s1);box-shadow:inset 0 0 0 1px var(--s1)}
+.step.next .k{color:var(--s1)}
+ol.valsteps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;max-width:72ch}
+
+.small-table td,.small-table th{padding:5px 8px}
+footer{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+footer code,p code,li code,td code{font-family:var(--mono);font-size:.88em;background:var(--wash);padding:1px 5px;border-radius:4px}
+
+.mmd{overflow-x:auto;padding-block:4px}
+.mmd pre{margin:0;display:flex;justify-content:center}
+table.nodes td:first-child{white-space:nowrap}
+table.nodes td:last-child{color:var(--ink-2);font-size:12.5px}
+#tip{position:fixed;z-index:10;pointer-events:none;background:var(--ink);color:var(--surface);font-size:12.5px;padding:6px 9px;border-radius:6px;max-width:260px;line-height:1.35}
+@media (prefers-reduced-motion:no-preference){.bar{transition:filter .12s}}
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Avito DS Bootcamp · тестовое задание · кандидатогенерация</div>
+  <h1>Что показала разведка данных</h1>
+  <p class="lede">Бенчмарк состоит из редких запросов, а объявления из истории почти не пересекаются с корпусом. Поэтому решение должно сопоставлять текст запроса с текстом объявления. Сужать круг поиска помогают город, микрокатегория и фильтр «Вид услуги».</p>
+  <div class="meta"><span><b>26.09.2026</b></span><span>4 параллельных разбора: запросы, корпус, география, тексты</span><span>метрика: <b>Recall@50</b>, среднее по запросам</span></div>
+</header>
+
+<section aria-label="Главные цифры">
+  <div class="tiles">
+    <div class="tile"><div class="num">63<small>%</small></div><p>запросов бенчмарка ни разу не встречались в train</p></div>
+    <div class="tile"><div class="num">5.3<small>%</small></div><p>объявлений из train есть в корпусе; 90% корпуса никто ни разу не выбирал</p></div>
+    <div class="tile"><div class="num">83<small>%</small></div><p>пар: объявление из того же города, где искали (93% для поиска по городу)</p></div>
+    <div class="tile"><div class="num">85<small>%</small></div><p>выборов по одному и тому же тексту запроса приходятся на одну и ту же микрокатегорию</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">Данные</div>
+    <h2>Три файла: история, бенчмарк и где искать</h2>
+  </div>
+  <div class="files">
+    <div class="file">
+      <div class="fname">train.parquet</div>
+      <div class="rows">497 673<span>пар</span></div>
+      <p>Строка: человек искал <b>это</b> и выбрал <b>вот это</b>. Нет id запроса, нет времени, нет показанных, но не выбранных объявлений.</p>
+      <div class="cols"><span class="col q">search_*</span><span class="col i">item_*</span></div>
+    </div>
+    <div class="file">
+      <div class="fname">benchmark_queries.parquet</div>
+      <div class="rows">2 452<span>запроса</span></div>
+      <p>Бенчмарк: запросы, для которых вы сдаёте <code>answer.csv</code>, по ним платформа считает Recall@50. Есть только половина про запрос и <code>query_id</code>; что выбрали, скрыто.</p>
+      <div class="cols"><span class="col">query_id</span><span class="col q">search_*</span></div>
+    </div>
+    <div class="file">
+      <div class="fname">benchmark_items.parquet</div>
+      <div class="rows">189 212<span>объявлений</span></div>
+      <p>Корпус: здесь ищем 50 кандидатов. Все правильные ответы лежат здесь.</p>
+      <div class="cols"><span class="col">item_id</span><span class="col i">item_*</span></div>
+    </div>
+  </div>
+  <p class="note">Одним запросом разумно считать сочетание «текст + локация + фильтры»: так в train получается 354 тыс. запросов, у 84% из них выбрано ровно одно объявление. Значит, Recall@50 на практике означает «попало ли одно нужное объявление в 50». Если выбрано несколько, запрос приносит долю попавших: 1 из 2 даёт 0,5.</p>
+</section>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">Запросы · eda/01_queries.md</div>
+    <h2>Бенчмарк состоит из редких запросов</h2>
+    <p class="verdict">Похоже, составители взяли по одному запросу на уникальный текст: такая схема отбора на train воспроизводит доли бенчмарка почти точно. Поэтому частые запросы вроде «маникюр» в бенчмарке почти не встречаются, а 63% текстов в train нет совсем.</p>
+  </div>
+  <div class="card">
+    <h3>Сколько раз текст запроса встречается в train</h3>
+    <p class="note">Доля запросов. Для сравнения: случайный запрос из самого train.</p>
+    <div id="c-hist"></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h3>Какой отбор воспроизводит бенчмарк</h3>
+      <p class="note">Доля запросов, чей текст есть в остальном train, при трёх способах отложить 2 452 запроса. Пунктир: настоящий бенчмарк.</p>
+      <div id="c-schemes"></div>
+    </div>
+    <div class="card">
+      <h3>Длина запроса в словах</h3>
+      <p class="note">Бенчмарк похож на уникальные тексты, а не на строки train.</p>
+      <div id="c-len"></div>
+    </div>
+  </div>
+  <p class="note">Отсюда схема валидации: отбирать уникальные тексты равномерно, а не случайные строки или запросы. Случайное разбиение дало бы 87–89% «знакомых» текстов вместо 37% и завысило бы метрику.</p>
+</section>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">Корпус и популярность · eda/02_corpus_popularity.md</div>
+    <h2>История и популярность не работают</h2>
+    <p class="verdict">Объявления, которые выбирали в train, почти не попадают в корпус. «Запомнить, что выбирали» или «вернуть популярное» даёт recall около 0.01.</p>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h3>Пересечение train и корпуса</h3>
+      <div id="c-overlap" class="stack-group" style="display:flex;flex-direction:column;gap:18px"></div>
+    </div>
+    <div class="card">
+      <h3>Лестница простых бейзлайнов</h3>
+      <p class="note">Recall@50 на случайно отложенных 10% запросов train. Это завышающая схема (см. раздел о запросах), так что на правильной валидации будет ещё ниже. Вторая серия считается только по 8% запросов, где выбранное объявление есть в корпусе, и завышена ещё сильнее.</p>
+      <div id="c-ladder"></div>
+    </div>
+  </div>
+  <p class="note">Train от этого не бесполезен: 497 тыс. пар «текст запроса ↔ текст объявления» годятся для обучения эмбеддингов и классификатора микрокатегорий. Бесполезны именно <code>item_id</code> из train.</p>
+</section>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">География · eda/03_geography.md</div>
+    <h2>Город сильно сужает поиск, но жёсткий фильтр опасен</h2>
+    <p class="verdict">У запросов по городу точный фильтр «только свой город» срезает 6,8% правильных ответов, а у запросов по региону не работает вовсе. Пул «свой город + соседи в радиусе 100 км + города, парные в train» теряет не больше 1,7% и сужает поиск со 189 тысяч до 2–4 тысяч объявлений. Для регионов пул из городов, куда вели выборы в train, теряет 4,6%. Всё, что вне пула, попадает в ответ только через добор до 50.</p>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h3>Где искали: город или регион</h3>
+      <p class="note">Часть запросов идёт по региону или всей России. Для них совпадение «город = город» не работает никогда.</p>
+      <div id="c-loctype" style="display:flex;flex-direction:column;gap:18px"></div>
+      <div class="tbl"><table class="small-table">
+        <thead><tr><th>search_location_id</th><th>что это</th><th class="n">запросов в бенчмарке</th></tr></thead>
+        <tbody>
+          <tr><td><code>107620</code></td><td>Москва и область</td><td class="n">119</td></tr>
+          <tr><td><code>621540</code></td><td>вся Россия</td><td class="n">94</td></tr>
+          <tr><td><code>107621</code></td><td>Петербург и область</td><td class="n">50</td></tr>
+        </tbody></table></div>
+    </div>
+    <div class="card">
+      <h3>Сколько правильных ответов теряет гео-фильтр</h3>
+      <p class="note">Доля выбранных объявлений train, которые не попали бы в пул. Меньше лучше. Пулы с соседями и парами строятся по одной половине запросов train и проверяются на другой. Для регионов радиус считается от центра выборов из этого региона.</p>
+      <div id="c-geoloss"></div>
+      <div class="tbl"><table class="small-table">
+        <thead><tr><th>пул для поиска по городу</th><th class="n">объявлений, медиана</th></tr></thead>
+        <tbody>
+          <tr><td>весь корпус</td><td class="n">189 212</td></tr>
+          <tr><td>свой город</td><td class="n">2 326</td></tr>
+          <tr><td>радиус 30 км</td><td class="n">2 598</td></tr>
+          <tr><td>радиус 100 км</td><td class="n">3 572</td></tr>
+        </tbody></table></div>
+    </div>
+  </div>
+  <p class="note">Флаг доставки почти пустой: 12 строк в train и ни одной в бенчмарке. Город в тексте запроса («перевозки владикавказ тбилиси») обычно означает пункт назначения, а исполнителя всё равно выбирают в своём городе.</p>
+</section>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">Тексты · eda/04_text_filters.md</div>
+    <h2>Слова запроса почти всегда есть в объявлении, но в разных формах</h2>
+    <p class="verdict">Если сравнивать по основе слова, общее слово с выбранным объявлением находится у 96% пар. Нужны стемминг и все три поля. Оставшиеся 4% (синонимы, опечатки) ловят эмбеддинги.</p>
+  </div>
+  <div class="card">
+    <h3>Хотя бы одно слово запроса встречается в поле объявления</h3>
+    <p class="note">Одна пара на уникальный запрос, 50 тыс. пар. «По основе»: сравниваются первые 5 букв слова, это грубая замена стемминга.</p>
+    <div id="c-fields"></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h3>Почему у 4% пар нет общих слов</h3>
+      <p class="note">Грубая разметка примеров вручную.</p>
+      <div id="c-causes"></div>
+    </div>
+    <div class="card">
+      <h3>Примеры</h3>
+      <div class="tbl"><table class="examples">
+        <thead><tr><th>запрос</th><th>выбранное объявление</th></tr></thead>
+        <tbody>
+          <tr><td>сапожник</td><td>Ремонт обуви сумок и изделий из кожи <div class="cause">синоним</div></td></tr>
+          <tr><td>подстричь газон</td><td>Покос травы триммером <div class="cause">перефраз</div></td></tr>
+          <tr><td>фотоателье</td><td>Фото на документы <div class="cause">составное слово</div></td></tr>
+          <tr><td>сварщик</td><td>Сварочные работы, аргон <div class="cause">словообразование</div></td></tr>
+          <tr><td>мукалатура</td><td>Прием макулатуры <div class="cause">опечатка</div></td></tr>
+          <tr><td>бобкет</td><td>Услуги бобкэта <div class="cause">опечатка, транслит</div></td></tr>
+        </tbody></table></div>
+    </div>
+  </div>
+  <p class="note">Запросы длинные и хвостовые: все слова запроса есть в заголовке и параметрах только у 29% пар, а с описанием у 62%. Значит, нужен скоринг вида BM25, где совпадение части слов уже даёт очки, а не строгое «все слова». В <code>item_infm_params_text</code> много служебного текста (ключи, адрес, график), его стоит вычистить до индексации.</p>
+</section>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">Фильтры · eda/04_text_filters.md</div>
+    <h2>Фильтр «Вид услуги» почти безопасен, остальные нет</h2>
+    <p class="verdict">Жёсткий фильтр по «Виду» или «Типу услуги» срезает около 2% правильных ответов и сужает поиск в 15 раз. Но фильтры есть только у 37% запросов бенчмарка, поэтому остальным вид услуги придётся угадывать по тексту.</p>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h3>Сколько правильных ответов срежет фильтр, если применить его жёстко</h3>
+      <p class="note">Доля выбранных объявлений train, которые не проходят фильтр поиска.</p>
+      <div id="c-filters"></div>
+    </div>
+    <div class="card">
+      <h3>У скольких запросов вообще есть фильтр</h3>
+      <div id="c-hasfilter"></div>
+      <p class="note">В бенчмарке нет фильтров «Автосервис» и «Рейтинг», хотя в train автосервис занимает около 12% строк. Переучиваться на авто-вертикаль не стоит.</p>
+      <div class="stack" style="margin-top:6px">
+        <div class="stack-title">Микрокатегория по тексту запроса</div>
+        <p class="note">У 85% выборов по одному тексту одна и та же микрокатегория (всего их 752). Это повод обучить классификатор «запрос → микрокатегория» на всех 497 тыс. строк и использовать его как бонус. Жёсткий фильтр по одной микрокатегории, судя по этим 85%, потерял бы порядка 15% (это оценка, а не замер), поэтому только бонус.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">Что это значит для решения</div>
+    <h2>Решение как RAG без генерации</h2>
+    <p>Кандидатогенерация — это ретривер из RAG: ответ здесь и есть найденные документы, поэтому шага генерации нет, а качество меряется recall@k. Как в RAG, работа делится на офлайн (индексация и обучение, один раз) и онлайн (ретривал на каждый запрос). Это план, а не готовое решение: каждый узел проверяется на валидации, бесполезные выкинем.</p>
+  </div>
+  <div class="card">
+    <h3>Офлайн: индексация и обучение</h3>
+    <p class="note">Выполняется один раз, до запросов. Документы — объявления корпуса, логи — train. Пунктир — необязательный шаг, если останется время.</p>
+    <div class="mmd"><pre class="mermaid">
+graph TD;
+  docs(["benchmark_items.parquet&lt;br/&gt;документы"]):::first
+  logs(["train.parquet&lt;br/&gt;логи: запрос → выбранное объявление"]):::first
+  preprocess["preprocess&lt;br/&gt;очистка параметров; чанкинг не нужен"]
+  embed_documents["embed_documents&lt;br/&gt;эмбеддинг каждого объявления"]
+  vector_index["vector_index&lt;br/&gt;dense-индекс"]
+  sparse_index["sparse_index&lt;br/&gt;BM25 со стеммингом"]
+  split["split&lt;br/&gt;отложить запросы как в бенчмарке"]
+  golden_set(["golden set&lt;br/&gt;только для оценки recall@50"]):::last
+  train_logs["обучающие логи&lt;br/&gt;train без отложенных"]
+  metadata_map["metadata_map&lt;br/&gt;регион → города"]
+  train_query_classifier["train_query_classifier&lt;br/&gt;запрос → микрокатегория"]
+  finetune_embedder["finetune_embedder&lt;br/&gt;доменная адаптация на парах"]
+  docs --&gt; preprocess;
+  preprocess --&gt; embed_documents;
+  embed_documents --&gt; vector_index;
+  preprocess --&gt; sparse_index;
+  logs --&gt; split;
+  split --&gt; golden_set;
+  split --&gt; train_logs;
+  train_logs --&gt; metadata_map;
+  train_logs --&gt; train_query_classifier;
+  train_logs -.-&gt; finetune_embedder;
+  finetune_embedder -.-&gt; embed_documents;
+  classDef default fill:#f2f0ff,stroke:#8b7fe8,color:#1a1a19,line-height:1.2
+  classDef first fill:#ffffff,stroke:#8b7fe8,color:#1a1a19
+  classDef last fill:#bfb6fc,stroke:#6a5bd6,color:#1a1a19
+</pre></div>
+    <p class="note"><b>Против утечки:</b> карта регионов, классификатор и дообучение эмбеддера учатся только на обучающих логах, без golden set, иначе оценка будет завышена. Для финального ответа по бенчмарку всё переобучается на полном train. Чанкинг не нужен: объявление короткое (медиана описания около 1 000 символов), один документ = заголовок + параметры + начало описания.</p>
+  </div>
+
+  <div class="card">
+    <h3>Онлайн: ретривал одного запроса</h3>
+    <p class="note">Как в LangGraph: сплошная стрелка — следующий шаг, пунктир — условный переход (выбирается одна ветка), две стрелки из одного узла — параллельные ветки, которые потом сходятся.</p>
+    <div class="mmd"><pre class="mermaid">
+graph TD;
+  __start__(["__start__: запрос"]):::first
+  query_analysis["query_analysis&lt;br/&gt;нормализовать текст, разобрать фильтры"]
+  prefilter_city["geo_prefilter: город&lt;br/&gt;свой + соседи ≤100 км + парные из train"]
+  prefilter_region["geo_prefilter: регион&lt;br/&gt;города региона по metadata_map"]
+  no_prefilter["без гео-фильтра&lt;br/&gt;вся Россия"]
+  metadata_filter["metadata_filter&lt;br/&gt;«Вид / Тип услуги», запас 5–10 мест"]
+  query_classifier["query_classifier&lt;br/&gt;микрокатегория по тексту"]
+  sparse_retriever["sparse_retriever&lt;br/&gt;BM25 по sparse_index"]
+  dense_retriever["dense_retriever&lt;br/&gt;близость по vector_index"]
+  fusion["fusion_and_boost&lt;br/&gt;слияние скоров + бонусы за метаданные"]
+  fallback["fallback&lt;br/&gt;добор из всего корпуса"]
+  __end__(["__end__: top-50 item_id&lt;br/&gt;вместо генерации"]):::last
+  __start__ --&gt; query_analysis;
+  query_analysis -. город .-&gt; prefilter_city;
+  query_analysis -. регион .-&gt; prefilter_region;
+  query_analysis -. вся Россия .-&gt; no_prefilter;
+  query_analysis --&gt; query_classifier;
+  prefilter_city --&gt; metadata_filter;
+  prefilter_region --&gt; metadata_filter;
+  no_prefilter --&gt; metadata_filter;
+  metadata_filter --&gt; sparse_retriever;
+  metadata_filter --&gt; dense_retriever;
+  sparse_retriever --&gt; fusion;
+  dense_retriever --&gt; fusion;
+  query_classifier --&gt; fusion;
+  fusion -. меньше 50 .-&gt; fallback;
+  fusion -. ровно 50 .-&gt; __end__;
+  fallback --&gt; __end__;
+  classDef default fill:#f2f0ff,stroke:#8b7fe8,color:#1a1a19,line-height:1.2
+  classDef first fill:#ffffff,stroke:#8b7fe8,color:#1a1a19
+  classDef last fill:#bfb6fc,stroke:#6a5bd6,color:#1a1a19
+</pre></div>
+  </div>
+
+  <div class="card">
+    <h3>Что делает каждый онлайн-узел и почему он такой</h3>
+    <div class="tbl"><table class="nodes">
+      <thead><tr><th>узел</th><th>что делает</th><th>откуда взялось</th></tr></thead>
+      <tbody>
+        <tr><td><code>query_analysis</code></td><td>Приводит текст к нижнему регистру, ё→е. Разбирает строку фильтров на пары «ключ значение». Роутит запрос по типу <code>search_location_id</code>: город, регион или вся Россия.</td><td>17% запросов бенчмарка по региону или всей России; фильтр — склеенные пары без разделителей</td></tr>
+        <tr><td><code>geo_prefilter: город</code></td><td>Оставляет объявления своего города, соседних в радиусе 100 км и городов, которые в train встречались в паре с этим.</td><td>у запросов по городу точный город теряет 6,8% ответов, такой пул не больше 1,7%; в пуле 2–4 тыс. объявлений вместо 189 тыс.</td></tr>
+        <tr><td><code>geo_prefilter: регион</code></td><td>Берёт города, куда вели выборы из этого региона (<code>metadata_map</code>). Если в тексте назван город, берёт его. Это правило только для регионов: при поиске по городу названный город обычно пункт назначения («перевозки владикавказ тбилиси»).</td><td>107620 = Москва и область, 107621 = Петербург и область; пул теряет 4,6%; при регионе названный город угадывает 64% выборов</td></tr>
+        <tr><td><code>без гео-фильтра</code></td><td>Не ограничивает по географии.</td><td>621540 = вся Россия, разброс выборов сотни км</td></tr>
+        <tr><td><code>metadata_filter</code></td><td>Если в запросе есть «Вид услуги» или «Тип услуги» (кроме «Другое»), сужает пул по ним, но 5–10 мест из 50 оставляет без фильтра. Если фильтра нет, пропускает всё.</td><td>жёстко срезает около 2% ответов и сужает пул в 15 раз; фильтр есть только у 37% запросов</td></tr>
+        <tr><td><code>query_classifier</code></td><td>По тексту запроса предсказывает 1–3 вероятные микрокатегории. Идёт параллельно, пулы ему не нужны.</td><td>85% выборов по одному тексту в одной микрокатегории</td></tr>
+        <tr><td><code>sparse_retriever</code></td><td>Ищет внутри пула по словам: заголовок, очищенные параметры, описание с разными весами, слова приведены к основе.</td><td>общее слово по основе есть у 96% пар; стемминг даёт +15 п.п. на заголовке</td></tr>
+        <tr><td><code>dense_retriever</code></td><td>Ищет внутри пула по смыслу: косинусная близость эмбеддинга запроса к эмбеддингам объявлений.</td><td>4% пар без общих слов: синонимы, опечатки, составные слова</td></tr>
+        <tr><td><code>fusion_and_boost</code></td><td>Сливает кандидатов двух ретриверов в один скор и добавляет бонусы: за свой город (для региона — за его главные города, для всей России бонуса нет), за предсказанную микрокатегорию, за совпадение мягких фильтров («Тип услуги автосервиса», «Предмет», «Услуга», «Другое»). Берёт лучшие 50. Веса подбираются на golden set.</td><td>всё это мягкие сигналы: как жёсткие фильтры они срезали бы от 4 до 19% ответов</td></tr>
+        <tr><td><code>fallback</code></td><td>Если кандидатов меньше 50, добирает из всего корпуса по тому же скору.</td><td>пустое место в ответе ничего не приносит</td></tr>
+      </tbody></table></div>
+  </div>
+
+  <div class="card">
+    <h3>Словарь: термин RAG → наш шаг</h3>
+    <div class="tbl"><table class="nodes">
+      <thead><tr><th>в RAG</th><th>у нас</th><th>заметка</th></tr></thead>
+      <tbody>
+        <tr><td>индексация документов</td><td><code>preprocess</code>, <code>embed_documents</code>, <code>sparse_index</code></td><td>документ = объявление, чанкинг не нужен</td></tr>
+        <tr><td>гибридный поиск</td><td><code>sparse_retriever</code> + <code>dense_retriever</code></td><td>BM25 ловит точные слова, эмбеддинги — синонимы</td></tr>
+        <tr><td>фильтрация по метаданным</td><td><code>geo_prefilter</code>, <code>metadata_filter</code></td><td>город и «Вид услуги»: сужают пул до поиска</td></tr>
+        <tr><td>анализ и роутинг запроса</td><td><code>query_analysis</code>, <code>query_classifier</code></td><td>тип локации и микрокатегория</td></tr>
+        <tr><td>fusion (например, RRF)</td><td><code>fusion_and_boost</code></td><td>плюс бонусы за метаданные</td></tr>
+        <tr><td>реранкер</td><td>пока нет</td><td>порядок внутри 50 не важен; но реранкер, отбирающий 50 из 200–300 кандидатов, может поднять recall — идея на потом</td></tr>
+        <tr><td>генерация (LLM)</td><td>нет</td><td>ответ — сами 50 <code>item_id</code></td></tr>
+        <tr><td>golden set, оценка ретривера recall@k</td><td><code>split</code> → golden set</td><td>валидация, похожая на бенчмарк</td></tr>
+        <tr><td>доменная адаптация эмбеддера</td><td><code>finetune_embedder</code></td><td>497 тыс. пар «запрос → объявление» из train</td></tr>
+      </tbody></table></div>
+  </div>
+
+  <div class="card">
+    <h3>Golden set: валидация, которая похожа на бенчмарк</h3>
+    <ol class="valsteps">
+      <li>Равномерно отобрать уникальные тексты train, по одному запросу (текст, локация, фильтры) на текст.</li>
+      <li>Оставить только запросы, у которых выбранное объявление есть в корпусе: искать будем в <code>benchmark_items</code>.</li>
+      <li>Строки этих запросов убрать из обучения; другие запросы с тем же текстом оставить.</li>
+      <li>Считать Recall@50 как среднее по запросам, отдельно смотреть срез «текста нет в train».</li>
+    </ol>
+    <p class="note">Оговорка: отложенные объявления берутся из тех 10% корпуса, что встречались в train. На бенчмарке картина может немного отличаться. Первая отправка покажет расхождение.</p>
+  </div>
+
+  <div class="steps" aria-label="Путь до сдачи">
+    <div class="step done"><span class="k">1 ✓</span>Разведка</div>
+    <div class="step next"><span class="k">2 · дальше</span>Валидация</div>
+    <div class="step"><span class="k">3</span>Бейзлайн и отправка №1</div>
+    <div class="step"><span class="k">4</span>Улучшения</div>
+    <div class="step"><span class="k">5</span>Сдача до 28.09, 21:00</div>
+  </div>
+</section>
+
+<footer>
+  <span>Источник: отчёты и скрипты в <code>eda/</code>: <code>01_queries.md</code>, <code>02_corpus_popularity.md</code>, <code>03_geography.md</code>, <code>04_text_filters.md</code>, сводка <code>00_summary.md</code>.</span>
+  <span>Числа посчитаны скриптами <code>*_eda.py</code> на полном train, текстовые доли на выборке 50 тыс. уникальных запросов.</span>
+</footer>
+</div>
+
+<div id="tip" hidden></div>
+
+<script>
+(function(){
+  const S = n => `var(--s${n})`;
+  const pct = v => (Math.round(v*10)/10).toString().replace('.', ',') + '%';
+  const dec = d => v => v.toFixed(d).replace('.', ',');
+
+  function legend(series){
+    if (series.length < 2) return '';
+    return '<div class="legend">' + series.map(s => `<span><i style="background:${s.color}"></i>${s.name}</span>`).join('') + '</div>';
+  }
+  function table(rows, series, fmt, head){
+    return `<details class="tv"><summary>Таблица</summary><div class="tbl"><table><thead><tr><th>${head||''}</th>` +
+      series.map(s => `<th class="n">${s.name}</th>`).join('') + '</tr></thead><tbody>' +
+      rows.map((r,i) => `<tr><td>${r.label||r}</td>` + series.map(s => `<td class="n">${s.values[i] === null ? '—' : fmt(s.values[i])}</td>`).join('') + '</tr>').join('') +
+      '</tbody></table></div></details>';
+  }
+  function hbars(id, cfg){
+    const el = document.getElementById(id);
+    const fmt = cfg.fmt || pct;
+    const x = v => Math.min(100, v / cfg.max * 100);
+    let h = legend(cfg.series);
+    if (cfg.ref) h += `<div class="legend"><span><i style="background:none;border-left:2px dashed var(--ink-2);border-radius:0"></i>${cfg.ref.label}</span></div>`;
+    h += '<div class="plot">';
+    cfg.rows.forEach((r, i) => {
+      const lab = typeof r === 'string' ? r : r.label;
+      const sub = (typeof r === 'object' && r.sub) ? `<span class="sub">${r.sub}</span>` : '';
+      h += `<div class="rl">${lab}${sub}</div><div class="track">`;
+      cfg.ticks.forEach(t => h += `<div class="gl${t===0?' zero':''}" style="left:${x(t)}%"></div>`);
+      if (cfg.ref) h += `<div class="ref" style="left:${x(cfg.ref.value)}%"></div>`;
+      cfg.series.forEach(s => {
+        const v = s.values[i];
+        if (v === null) { h += `<div class="line"><span class="val" style="left:0">${cfg.nullText || '—'}</span></div>`; return; }
+        const tip = `${lab}${cfg.series.length>1 ? ' · ' + s.name : ''}: ${fmt(v)}`;
+        h += `<div class="line"><div class="bar" style="width:${x(v)}%;background:${s.color}" data-tip="${tip}"></div>` +
+             `<span class="val" style="left:calc(${x(v)}% + 6px)">${fmt(v)}</span></div>`;
+      });
+      h += '</div>';
+    });
+    h += '<div></div><div class="axis">' + cfg.ticks.map(t => `<span style="left:${x(t)}%">${(cfg.tickFmt||fmt)(t)}</span>`).join('');
+    h += '</div>';
+    if (cfg.axisTitle) h += `<div class="axis-title">${cfg.axisTitle}</div>`;
+    h += '</div>' + table(cfg.rows, cfg.series, fmt, cfg.head);
+    el.innerHTML = h;
+  }
+  function stacks(id, groups){
+    const el = document.getElementById(id);
+    el.innerHTML = groups.map(g =>
+      `<div class="stack"><div class="stack-title">${g.title}</div><div class="stack-bar" role="img" aria-label="${g.title}">` +
+      g.parts.map(p => `<div style="width:${p.value}%;background:${p.color}" data-tip="${p.name}: ${pct(p.value)}"></div>`).join('') +
+      '</div><div class="stack-lab">' +
+      g.parts.map(p => `<span><i style="background:${p.color}"></i>${p.name} <b>${pct(p.value)}</b></span>`).join('') +
+      '</div></div>').join('');
+  }
+
+  hbars('c-hist', {
+    rows: ['0 — ни разу', '1 раз', '2–4', '5–19', '20–99', '100 и больше'],
+    series: [
+      {name:'бенчмарк', color:S(1), values:[62.7, 9.7, 12.8, 10.6, 3.3, 1.0]},
+      {name:'случайный запрос из train', color:S(2), values:[12.8, 5.6, 9.4, 17.1, 21.0, 34.1]}
+    ],
+    max: 70, ticks:[0,20,40,60], tickFmt: v => v + '%', head:'строк в train с тем же текстом'
+  });
+  hbars('c-schemes', {
+    rows: [{label:'по уникальным текстам', sub:'один запрос на текст'}, {label:'по запросам', sub:'текст + город + фильтры'}, {label:'по строкам', sub:'по кликам'}],
+    series: [{name:'текст есть в train', color:S(1), values:[37.4, 87.2, 89.4]}],
+    max: 100, ticks:[0,25,50,75,100], tickFmt: v => v + '%', ref:{value:37.3, label:'бенчмарк 37,3%'}, head:'способ отбора'
+  });
+  hbars('c-len', {
+    rows: ['1 слово', '2', '3', '4', '5', '6+'],
+    series: [
+      {name:'бенчмарк', color:S(1), values:[4.4, 28.7, 31.7, 21.0, 9.2, 5.0]},
+      {name:'train, уникальные тексты', color:S(2), values:[4.7, 30.2, 33.2, 20.1, 7.9, 3.9]},
+      {name:'train, строки', color:S(3), values:[19.8, 44.8, 22.5, 9.3, 2.6, 1.1]}
+    ],
+    max: 50, ticks:[0,25,50], tickFmt: v => v + '%', head:'слов в запросе'
+  });
+  stacks('c-overlap', [
+    {title:'Объявления, которые выбирали в train (345 тыс.)', parts:[
+      {name:'есть в корпусе', value:5.3, color:S(1)}, {name:'нет в корпусе', value:94.7, color:'var(--rest)'}]},
+    {title:'Корпус (189 тыс. объявлений)', parts:[
+      {name:'выбирали в train', value:9.6, color:S(1)}, {name:'никогда не выбирали', value:90.4, color:'var(--rest)'}]}
+  ]);
+  hbars('c-ladder', {
+    rows: ['глобальный топ-50', 'топ-50 в городе запроса', 'история текста + топ города'],
+    series: [
+      {name:'все отложенные запросы', color:S(1), values:[0.0002, 0.011, 0.012]},
+      {name:'только с объявлением из корпуса', color:S(2), values:[0.004, 0.177, 0.186]}
+    ],
+    max: 0.25, ticks:[0, 0.1, 0.2], fmt: v => v < 0.001 ? '<0,001' : dec(3)(v), tickFmt: dec(1), head:'бейзлайн', axisTitle:'Recall@50'
+  });
+  stacks('c-loctype', [
+    {title:'Бенчмарк', parts:[{name:'город', value:82.7, color:S(1)}, {name:'регион или вся Россия', value:17.3, color:S(2)}]},
+    {title:'Train', parts:[{name:'город', value:89.2, color:S(1)}, {name:'регион или вся Россия', value:10.8, color:S(2)}]}
+  ]);
+  hbars('c-geoloss', {
+    rows: ['только свой город', 'свой город или ≤30 км', 'свой город или ≤100 км', 'свой город или ≤300 км', 'свой город или города, парные в train'],
+    series: [
+      {name:'поиск по городу', color:S(1), values:[6.8, 3.6, 1.7, 0.9, 2.2]},
+      {name:'поиск по региону', color:S(2), values:[null, 25.6, 14.1, 9.4, 4.6]}
+    ],
+    max: 30, ticks:[0,10,20,30], tickFmt: v => v + '%', nullText:'не работает: у региона нет «своего города»', head:'пул'
+  });
+  hbars('c-fields', {
+    rows: ['заголовок', 'параметры', 'описание', 'заголовок + параметры', 'любое поле'],
+    series: [
+      {name:'точное слово', color:S(1), values:[62.7, 50.7, 78.4, 75.5, 89.7]},
+      {name:'по основе (5 букв)', color:S(2), values:[77.6, 64.2, 90.5, 87.3, 96.0]}
+    ],
+    max: 100, ticks:[0,25,50,75,100], tickFmt: v => v + '%', head:'поле'
+  });
+  stacks('c-causes', [
+    {title:'Доли среди пар без общих слов', parts:[
+      {name:'синонимы, перефраз', value:40, color:S(1)}, {name:'морфология, составные слова', value:25, color:S(2)},
+      {name:'опечатки, транслит', value:20, color:S(3)}, {name:'шум, пустой заголовок', value:15, color:S(4)}]}
+  ]);
+
+  const ic = {
+    good:'<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5l2.5 2.5L10 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    warn:'<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6h8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+    crit:'<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
+  };
+  const chip = (k, t) => `<span class="chip ${k}">${ic[k]}${t}</span>`;
+  hbars('c-filters', {
+    rows: [
+      {label:'Вид услуги X', sub: chip('good','жёстко, с запасом')},
+      {label:'Тип услуги X', sub: chip('good','жёстко, с запасом')},
+      {label:'Тип услуги автосервиса', sub: chip('warn','мягко')},
+      {label:'Предмет или специальность', sub: chip('warn','мягко')},
+      {label:'Услуга X', sub: chip('warn','мягко')},
+      {label:'Вид услуги «Другое»', sub: chip('warn','мягко')},
+      {label:'Онлайн-запись', sub: chip('crit','не применять')}
+    ],
+    series: [{name:'срежет', color:S(1), values:[1.6, 2.1, 4.1, 10.5, 15.1, 19.4, 41.7]}],
+    max: 50, ticks:[0,10,20,30,40,50], tickFmt: v => v + '%', head:'фильтр'
+  });
+  hbars('c-hasfilter', {
+    rows: ['бенчмарк', 'train, уникальные запросы'],
+    series: [{name:'есть фильтр', color:S(1), values:[36.9, 59.7]}],
+    max: 100, ticks:[0,50,100], tickFmt: v => v + '%', head:''
+  });
+
+  // tooltip
+  const tip = document.getElementById('tip');
+  document.addEventListener('pointermove', e => {
+    const t = e.target.closest && e.target.closest('[data-tip]');
+    if (!t) { tip.hidden = true; return; }
+    tip.textContent = t.getAttribute('data-tip');
+    tip.hidden = false;
+    const w = tip.offsetWidth, vw = window.innerWidth;
+    tip.style.left = Math.min(e.clientX + 12, vw - w - 8) + 'px';
+    tip.style.top = (e.clientY + 14) + 'px';
+  });
+})();
+</script>

@@ -216,3 +216,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- ds-bootcamp: данные задания, обученные модели и кэши, ответы
+data/
+work/
+answer*.csv
+submission_*.csv
+*.tar

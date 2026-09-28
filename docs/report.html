@@ -1,0 +1,871 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Кандидатогенерация услуг</title><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#f4f6f9; --surface:#ffffff; --sunk:#eaeef4; --ink:#141c28; --muted:#566172; --line:#d6dce5;
+  --val:#2446a8; --val-soft:#dfe6f8; --plat:#b4600c; --plat-soft:#f7e6d2;
+  --good:#1d7447; --good-soft:#dcefe3; --bad:#a8321f; --bad-soft:#f6e0db; --neutral:#6b7485;
+  --s1:#7f8aa0; --s2:#3f8f8a; --s3:#8d6cc0; --s4:#c28a2e; --s5:#2446a8; --s6:#b4600c;
+  --acc:var(--val); --acc-soft:var(--val-soft); --warm:var(--plat); --warm-soft:var(--plat-soft); --off:#6b7485; --off-soft:#eef0f3;
+  --font:"Golos Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0f141c; --surface:#161d28; --sunk:#1c2532; --ink:#e5eaf2; --muted:#9aa6b8; --line:#2b3545;
+    --val:#86a2f2; --val-soft:#1f2a47; --plat:#eca25a; --plat-soft:#3a2a18;
+    --good:#5cc690; --good-soft:#15301f; --bad:#f08a78; --bad-soft:#3a1d18; --neutral:#8d97a8;
+    --off:#95a0b2; --off-soft:#1a212c;
+    --off:#95a0b2; --off-soft:#1a212c;
+  --s1:#8e98ac; --s2:#5cb8b1; --s3:#b198e0; --s4:#dcae5a; --s5:#86a2f2; --s6:#eca25a;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0f141c; --surface:#161d28; --sunk:#1c2532; --ink:#e5eaf2; --muted:#9aa6b8; --line:#2b3545;
+  --val:#86a2f2; --val-soft:#1f2a47; --plat:#eca25a; --plat-soft:#3a2a18;
+  --good:#5cc690; --good-soft:#15301f; --bad:#f08a78; --bad-soft:#3a1d18; --neutral:#8d97a8;
+  --off:#95a0b2; --off-soft:#1a212c;
+  --s1:#8e98ac; --s2:#5cb8b1; --s3:#b198e0; --s4:#dcae5a; --s5:#86a2f2; --s6:#eca25a;
+}
+*{box-sizing:border-box}
+body{background:var(--bg); color:var(--ink); font-family:var(--font); font-size:16px; line-height:1.55; margin:0}
+.wrap{max-width:1180px; margin:0 auto; padding-inline:20px; padding-block:28px 64px; display:grid; grid-template-columns:210px minmax(0,1fr); gap:40px}
+@media (max-width:900px){ .wrap{grid-template-columns:minmax(0,1fr); padding-inline:16px} nav.toc{display:none} }
+nav.toc{position:sticky; top:calc(env(safe-area-inset-top,0px) + 20px); align-self:start; font-size:13.5px}
+nav.toc .lbl{font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:10px}
+nav.toc ol{list-style:none; margin:0; padding:0; display:grid; gap:2px; counter-reset:t}
+nav.toc a{display:grid; grid-template-columns:26px 1fr; color:var(--muted); text-decoration:none; padding:5px 8px; border-radius:6px; counter-increment:t}
+nav.toc a::before{content:counter(t, decimal-leading-zero); font-family:var(--mono); font-size:11px; padding-top:2px}
+nav.toc a:hover, nav.toc a:focus-visible{background:var(--sunk); color:var(--ink); outline:none}
+main{min-width:0; display:grid; gap:56px}
+section{display:grid; gap:18px; min-width:0}
+h1,h2,h3{text-wrap:balance; margin:0; font-weight:650; letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.2vw,42px); line-height:1.12}
+h2{font-size:26px; line-height:1.2}
+h3{font-size:18px; line-height:1.3}
+p{margin:0; max-width:70ch}
+.eyebrow{font-family:var(--mono); font-size:11.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted)}
+.lede{font-size:18px; color:var(--muted); max-width:66ch}
+.num{font-family:var(--mono); font-variant-numeric:tabular-nums}
+code,.code{font-family:var(--mono); font-size:.88em; background:var(--sunk); padding:1px 5px; border-radius:4px}
+.muted{color:var(--muted)}
+.facts{display:grid; grid-template-columns:max-content minmax(0,1fr); gap:6px 18px; margin:0; font-size:15px; max-width:88ch}
+.facts dt{color:var(--muted); font-size:13px; font-family:var(--mono); text-transform:uppercase; letter-spacing:.05em; padding-top:2px}
+.facts dd{margin:0}
+@media (max-width:560px){ .facts{grid-template-columns:minmax(0,1fr); gap:2px} .facts dd{margin-bottom:8px} }
+header.hero{display:grid; gap:18px; padding-bottom:8px; border-bottom:1px solid var(--line)}
+.kpis{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:10px; overflow:hidden}
+@media (max-width:700px){ .kpis{grid-template-columns:minmax(0,1fr)} }
+.kpi{background:var(--surface); padding:14px 16px; display:grid; gap:2px; align-content:start}
+.kpi .v{font-family:var(--mono); font-size:30px; font-weight:600; line-height:1.1; font-variant-numeric:tabular-nums}
+.kpi .k{font-size:13px; color:var(--muted)}
+.kpi.val .v{color:var(--val)} .kpi.plat .v{color:var(--plat)}
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:18px; min-width:0}
+.panel > .cap{font-size:13.5px; color:var(--muted); margin-top:10px; max-width:none}
+.grid2{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px}
+@media (max-width:900px){ .grid2{grid-template-columns:minmax(0,1fr)} }
+.chart{width:100%; height:auto; display:block}
+.chart text{font-family:var(--font); font-size:12px; fill:var(--muted)}
+.chart .t-ink{fill:var(--ink)} .chart .t-val{fill:var(--val); font-weight:600} .chart .t-plat{fill:var(--plat); font-weight:600}
+.chart .t-mono{font-family:var(--mono)} .chart .t-bold{font-weight:600}
+.chart .grid{stroke:var(--line); stroke-width:1} .chart .axis{stroke:var(--muted); stroke-width:1}
+.legend{display:flex; flex-wrap:wrap; gap:6px 16px; font-size:13px; color:var(--muted); margin-top:8px}
+.legend span{display:inline-flex; align-items:center; gap:6px}
+.legend i{width:14px; height:3px; border-radius:2px; display:inline-block}
+.legend i.sq{height:10px; width:10px; border-radius:2px}
+.tablewrap{overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:var(--surface)}
+table{border-collapse:collapse; width:100%; font-size:14px}
+th,td{padding:9px 12px; text-align:left; vertical-align:top; border-bottom:1px solid var(--line)}
+th{font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; background:var(--sunk); white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.n, th.n{text-align:right; font-family:var(--mono); font-variant-numeric:tabular-nums; white-space:nowrap}
+tr.hl td{background:var(--val-soft)}
+.pill{display:inline-block; font-size:11.5px; font-weight:600; padding:2px 8px; border-radius:999px; white-space:nowrap; line-height:1.5}
+.pill.in{background:var(--good-soft); color:var(--good)}
+.pill.out{background:var(--bad-soft); color:var(--bad)}
+.pill.info{background:var(--sunk); color:var(--muted)}
+.pill.partial{background:var(--plat-soft); color:var(--plat)}
+.steps{display:grid; gap:0; counter-reset:s; border:1px solid var(--line); border-radius:10px; background:var(--surface); overflow:hidden}
+.step{display:grid; grid-template-columns:52px minmax(0,1fr) 150px; gap:14px; padding:14px 16px; border-bottom:1px solid var(--line); align-items:start}
+.step:last-child{border-bottom:0}
+.step .no{font-family:var(--mono); font-size:13px; color:var(--val); padding-top:2px}
+.step h3{font-size:16px; margin-bottom:4px}
+.step p{font-size:14.5px; color:var(--muted)}
+.step .gain{text-align:right; font-family:var(--mono); font-size:13px; font-variant-numeric:tabular-nums}
+.step .gain b{display:block; font-size:18px; color:var(--ink)}
+@media (max-width:640px){ .step{grid-template-columns:36px minmax(0,1fr)} .step .gain{grid-column:2; text-align:left} }
+.filters{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+.filters button{font:inherit; font-size:13.5px; border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:6px 12px; border-radius:999px; cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+.filters button:focus-visible{outline:2px solid var(--val); outline-offset:2px}
+.exp td:first-child{font-family:var(--mono); font-size:12.5px; color:var(--muted); white-space:nowrap}
+.exp td.res{font-size:13.5px}
+.exp .grp td{background:var(--sunk); font-weight:600; font-size:13px; color:var(--ink); font-family:var(--font)}
+.cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:14px}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:16px; display:grid; gap:6px; align-content:start}
+.card h3{font-size:15.5px}
+.card p{font-size:14.5px; color:var(--muted)}
+ul.plain{margin:0; padding-left:20px; display:grid; gap:6px; max-width:74ch}
+pre.mermaid{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:16px; margin:0; overflow-x:auto; font-size:13px}
+.note{border-left:3px solid var(--plat); background:var(--plat-soft); padding:12px 14px; border-radius:0 8px 8px 0; font-size:14.5px; max-width:80ch}
+footer{font-size:13px; color:var(--muted); border-top:1px solid var(--line); padding-top:16px}
+a{color:var(--val)}
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto!important; transition:none!important} }
+html{scroll-behavior:smooth}
+
+.archfig{margin:0; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:14px; display:grid; gap:10px}
+.archfig .scroll{overflow-x:auto}
+.archfig figcaption{font-size:13.5px; color:var(--muted); max-width:none}
+.archfig svg.d{display:block; width:100%; min-width:1100px; height:auto}
+.archfig svg.f{display:block; width:100%; min-width:720px; height:auto}
+.archfig .legend{display:flex; flex-wrap:wrap; gap:6px 20px; font-size:13px; color:var(--muted); margin:0}
+.archfig .legend svg{width:34px; height:10px}
+.archfig /* элементы схемы */
+.lane{fill:var(--sunk); stroke:none}
+.archfig .lane-t{font:600 12px var(--mono); letter-spacing:.08em; fill:var(--muted)}
+.archfig .blk{fill:var(--off-soft); stroke:var(--line); stroke-dasharray:4 4}
+.archfig .frame{fill:var(--acc-soft); stroke:var(--acc); stroke-dasharray:6 5; stroke-width:1.4}
+.archfig .n{fill:var(--surface); stroke:var(--line); stroke-width:1.2}
+.archfig .n-on{fill:var(--surface); stroke:var(--acc); stroke-width:1.8}
+.archfig .n-tr{fill:var(--warm-soft); stroke:var(--warm); stroke-width:1.5}
+.archfig .n-off{fill:var(--surface); stroke:var(--off); stroke-width:1.2}
+.archfig .n-out{fill:var(--acc); stroke:var(--acc)}
+.archfig .t1{font:600 13px var(--font); fill:var(--ink)}
+.archfig .t2{font:400 11.5px var(--font); fill:var(--muted)}
+.archfig .t-out{font:600 13px var(--font); fill:var(--surface)}
+.archfig .lbl{font:500 11px var(--font); fill:var(--muted)}
+.archfig .lbl-tr{font:500 11px var(--font); fill:var(--warm)}
+.archfig .lbl-on{font:500 11px var(--font); fill:var(--acc)}
+.archfig .e-on{stroke:var(--acc); stroke-width:1.8; fill:none}
+.archfig .e-tr{stroke:var(--warm); stroke-width:1.5; stroke-dasharray:6 4; fill:none}
+.archfig .e-off{stroke:var(--off); stroke-width:1.3; fill:none}
+.archfig .ah-on{fill:var(--acc)}
+.archfig .ah-tr{fill:var(--warm)}
+.archfig .ah-off{fill:var(--off)}
+.archfig .legend{display:flex; flex-wrap:wrap; gap:6px 20px; font-size:13px; color:var(--muted)}
+.archfig .legend span{display:inline-flex; gap:8px; align-items:center}
+.archfig .legend svg{width:34px; height:10px}
+.archfig .bar{fill:var(--acc)}
+.archfig .bar-soft{fill:var(--acc-soft); stroke:var(--acc)}
+.archfig .fx{font:400 12px var(--mono); fill:var(--muted)}
+.archfig .fl{font:600 13px var(--font); fill:var(--ink)}
+.archfig .fs{font:400 12px var(--font); fill:var(--muted)}
+.archfig .fv{font:600 13px var(--mono); fill:var(--ink)}
+.archfig .fr{font:600 12px var(--mono); fill:var(--warm)}
+.archfig .grid{stroke:var(--line); stroke-width:1}
+.whys{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px}
+.why{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:12px 14px; font-size:14.5px}
+.why b{display:block; margin-bottom:2px}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Разделы">
+  <div class="lbl">Главное</div>
+  <ol>
+    <li><a href="#itog">Итог</a></li>
+    <li><a href="#pipeline">Финальный пайплайн</a></li>
+    <li><a href="#vklad">Вклад шагов</a></li>
+    <li><a href="#lessons">Выводы</a></li>
+  </ol>
+  <div class="lbl" style="margin-top:18px">Подробности</div>
+  <ol>
+    <li><a href="#vklad-det">Прирост по шагам</a></li>
+    <li><a href="#curves">Кривые Recall@K</a></li>
+    <li><a href="#f4-det">Дообученная модель</a></li>
+    <li><a href="#features">Какие признаки важнее</a></li>
+    <li><a href="#slices">Срезы</a></li>
+    <li><a href="#validation">Валидация</a></li>
+    <li><a href="#experiments">Все эксперименты</a></li>
+    <li><a href="#repro">Воспроизводимость</a></li>
+    <li><a href="#appendix">Цифры к выводам</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero" id="itog">
+  <div class="eyebrow">Avito DS Bootcamp · тестовое задание · 25–28.09.2026</div>
+  <h1>Кандидатогенерация для поиска услуг</h1>
+  <p class="lede">По поисковому запросу нужно вернуть 50 подходящих объявлений об услугах.</p>
+  <dl class="facts">
+    <dt>Запрос</dt><dd>текст, локация, строка фильтров</dd>
+    <dt>Ответ</dt><dd>50 объявлений из корпуса в 189&nbsp;212 услуг</dd>
+    <dt>Метрика</dt><dd>Recall@50, среднее по запросам. У 97.8% запросов правильный ответ один, поэтому метрика почти равна доле запросов, у которых выбранное объявление попало в первые 50</dd>
+    <dt>Обучение</dt><dd><code>train</code>: 497&nbsp;673 строки «запрос → объявление, которое выбрал пользователь», 354 тыс. уникальных запросов</dd>
+    <dt>Тест</dt><dd>2452 запроса без ответов; ответы ищутся в отдельном корпусе</dd>
+    <dt>Где что лежит</dt><dd><code>src/</code> — итоговое решение, <code>experiments/</code> — эксперименты, <code>eda/</code> — мои отчёты по шагам, <a href="../SOLUTION.md"><code>SOLUTION.md</code></a> — описание решения</dd>
+  </dl>
+  <div class="kpis">
+    <div class="kpi val"><span class="v">0.9156</span><span class="k">Recall@50 на валидации (3000 запросов)</span></div>
+    <div class="kpi plat"><span class="v">0.9041</span><span class="k">на платформе, у лучшего из 5 сабмитов</span></div>
+    <div class="kpi"><span class="v" id="expCount">—</span><span class="k">проведено экспериментов</span></div>
+  </div>
+
+  <div class="panel">
+    <h3>Сабмиты: валидация и платформа</h3>
+    <svg class="chart" id="chSubs" viewBox="0 0 760 285" role="img" aria-label="Recall@50 пяти сабмитов на валидации и на платформе"></svg>
+    <div class="legend"><span><i class="sq" style="background:var(--val)"></i>валидация</span><span><i class="sq" style="background:var(--plat)"></i>платформа</span></div>
+    <p class="cap">Ось начинается с 0.84. Бустинг сабмита 2 я обучал на тех же 3000 запросах валидации, поэтому его оценка «вне фолда» завышена. Разрыв между валидацией и платформой: 0.005 у схемы без градиентного бустинга, 0.021–0.022 у бустинга без дообученного эмбеддера, 0.017 и 0.012 у схем с дообученным эмбеддером (№4 и №5). Использовано 5 попыток из 7.</p>
+  </div>
+</header>
+
+<section id="pipeline">
+  <div class="eyebrow">Главное</div>
+  <h2>Финальный пайплайн</h2>
+  <p>Поисковая часть RAG без генерации: найти кандидатов, упорядочить их и отдать первые 50.</p>
+  <dl class="facts">
+    <dt>Обучается заранее</dt><dd>дообученная bge-m3 (общая модель и 5 копий по фолдам) и 5 моделей LightGBM — один раз, скриптом <code>train_all.sh</code></dd>
+    <dt>Строится при запуске</dt><dd>таблицы городов и классификатор микрокатегорий: для теста по полному train, для валидации без её запросов</dd>
+    <dt>На каждый запрос</dt><dd>BM25, базовая и дообученная bge-m3 находят ~320 кандидатов в области поиска запроса</dd>
+    <dt>Ранжирует</dt><dd>5 моделей LightGBM оценивают каждого кандидата по 59 признакам; кандидаты сортируются по средней оценке, в ответ идут первые 50</dd>
+    <dt>Запуск</dt><dd><code>python src/pipeline.py --mode bench</code></dd>
+  </dl>
+<figure class="archfig">
+    <div class="scroll">
+    <svg class="d" viewBox="0 0 1440 640" role="img" aria-label="Схема: сверху обучаемые по train компоненты, снизу путь одного запроса от поиска в индексах внутри области поиска через слияние RRF, объединение с кандидатами дообученной модели, 59 признаков и 5 моделей LightGBM к 50 объявлениям">
+      <defs>
+        <marker id="aOn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="ah-on"/></marker>
+        <marker id="aTr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="ah-tr"/></marker>
+        <marker id="aOff" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="ah-off"/></marker>
+      </defs>
+
+      <!-- полоса A: обучение -->
+      <rect class="lane" x="10" y="10" width="1420" height="200" rx="10"/>
+      <text class="lane-t" x="24" y="32">ОБУЧАЕТСЯ НА TRAIN ДАТАСЕТЕ (БЕЗ ЗАПРОСОВ ВАЛИДАЦИИ)</text>
+
+      <rect class="n-tr" x="24" y="50" width="170" height="60" rx="8"/>
+      <text class="t1" x="109" y="76" text-anchor="middle">train</text>
+      <text class="t2" x="109" y="94" text-anchor="middle">497 тыс. строк</text>
+
+      <rect class="n-tr" x="234" y="50" width="190" height="60" rx="8"/>
+      <text class="t1" x="329" y="76" text-anchor="middle">Пары для дообучения</text>
+      <text class="t2" x="329" y="94" text-anchor="middle">запрос + фильтры → объявление</text>
+
+      <rect class="n-tr" x="464" y="50" width="232" height="60" rx="8"/>
+      <text class="t1" x="580" y="76" text-anchor="middle">bge-m3 + LoRA, лосс MNRL</text>
+      <text class="t2" x="580" y="94" text-anchor="middle">1 общая + 5 копий по фолдам</text>
+
+      <rect class="n-tr" x="900" y="50" width="190" height="66" rx="8"/>
+      <text class="t1" x="995" y="72" text-anchor="middle">21 тыс. запросов train</text>
+      <text class="t2" x="995" y="89" text-anchor="middle">тот же путь и 59 признаков</text>
+      <text class="t2" x="995" y="105" text-anchor="middle">5 фолдов по тексту</text>
+
+      <rect class="n-tr" x="1130" y="50" width="200" height="60" rx="8"/>
+      <text class="t1" x="1230" y="76" text-anchor="middle">5 × LightGBM lambdarank</text>
+      <text class="t2" x="1230" y="94" text-anchor="middle">учатся ставить ответ выше</text>
+
+      <path class="e-tr" d="M194 80 H232" marker-end="url(#aTr)"/>
+      <path class="e-tr" d="M424 80 H462" marker-end="url(#aTr)"/>
+      <path class="e-tr" d="M696 80 H898" marker-end="url(#aTr)"/>
+      <text class="lbl-tr" x="797" y="72" text-anchor="middle">косинус — от копии без их фолда</text>
+      <path class="e-tr" d="M1090 80 H1128" marker-end="url(#aTr)"/>
+
+      <rect class="n-tr" x="560" y="140" width="210" height="52" rx="8"/>
+      <text class="t1" x="665" y="162" text-anchor="middle">Таблицы городов</text>
+      <text class="t2" x="665" y="180" text-anchor="middle">обучается при каждом запуске</text>
+
+      <rect class="n-tr" x="915" y="140" width="220" height="52" rx="8"/>
+      <text class="t1" x="1025" y="157" text-anchor="middle">Классификатор микрокатегорий</text>
+      <text class="t2" x="1025" y="172" text-anchor="middle">TF-IDF + логрег</text>
+      <text class="t2" x="1025" y="186" text-anchor="middle">обучается при каждом запуске</text>
+      <path class="e-tr" d="M109 110 V201 H950 V194" marker-end="url(#aTr)"/>
+      <path class="e-tr" d="M570 201 V194" marker-end="url(#aTr)"/>
+
+      <!-- полоса B: запрос -->
+      <rect class="lane" x="10" y="230" width="1420" height="400" rx="10"/>
+      <text class="lane-t" x="24" y="252">НА КАЖДЫЙ ЗАПРОС</text>
+
+      <!-- индексы корпуса -->
+      <rect class="blk" x="24" y="268" width="296" height="340" rx="10"/>
+      <rect class="n-off" x="40" y="286" width="264" height="54" rx="8"/>
+      <text class="t1" x="172" y="309" text-anchor="middle">Корпус: 189 212 объявлений</text>
+      <text class="t2" x="172" y="327" text-anchor="middle">заголовок + параметры + 500 симв. описания</text>
+      <rect class="n-off" x="40" y="385" width="258" height="40" rx="8"/>
+      <text class="t1" x="169" y="410" text-anchor="middle">Эмбеддинги дообученной bge-m3</text>
+      <rect class="n-off" x="40" y="465" width="258" height="40" rx="8"/>
+      <text class="t1" x="169" y="490" text-anchor="middle">Эмбеддинги базовой bge-m3</text>
+      <rect class="n-off" x="40" y="545" width="258" height="40" rx="8"/>
+      <text class="t1" x="169" y="570" text-anchor="middle">BM25: леммы + стемы</text>
+      <path class="e-off" d="M40 313 H30 V565 H38" />
+      <path class="e-off" d="M30 405 H38" marker-end="url(#aOff)"/>
+      <path class="e-off" d="M30 485 H38" marker-end="url(#aOff)"/>
+      <path class="e-off" d="M30 565 H38" marker-end="url(#aOff)"/>
+      <text class="lbl" x="172" y="362" text-anchor="middle">индексируется один раз</text>
+
+      <!-- веса дообученной модели → индекс -->
+      <path class="e-tr" d="M490 110 V220 H334 V372 H270 V383" marker-end="url(#aTr)"/>
+      <text class="lbl-tr" x="344" y="216">веса общей модели</text>
+
+      <!-- запрос и область поиска -->
+      <rect class="n-on" x="344" y="272" width="216" height="66" rx="8"/>
+      <text class="t1" x="452" y="292" text-anchor="middle">Запрос</text>
+      <text class="t2" x="452" y="309" text-anchor="middle">текст · локация · фильтры</text>
+      <text class="t2" x="452" y="325" text-anchor="middle">фильтры → в текст и в признаки</text>
+      <rect class="frame" x="356" y="358" width="244" height="252" rx="10"/>
+      <text class="lbl-on" x="368" y="376">область поиска запроса</text>
+      <path class="e-on" d="M452 338 V356" marker-end="url(#aOn)"/>
+      <path class="e-tr" d="M585 192 V356" marker-end="url(#aTr)"/>
+      <text class="lbl-tr" x="593" y="300">задаёт область</text>
+
+      <rect class="n-on" x="372" y="385" width="212" height="40" rx="8"/>
+      <text class="t1" x="478" y="410" text-anchor="middle">дообученная bge-m3 → топ-100</text>
+      <rect class="n-on" x="372" y="465" width="212" height="40" rx="8"/>
+      <text class="t1" x="478" y="490" text-anchor="middle">базовая bge-m3 → топ-300</text>
+      <rect class="n-on" x="372" y="545" width="212" height="40" rx="8"/>
+      <text class="t1" x="478" y="570" text-anchor="middle">BM25 → топ-300</text>
+      <text class="t2" x="368" y="624">город: свой + соседи + частые пары городов из train; регион → его города</text>
+
+      <path class="e-off" d="M298 405 H370" marker-end="url(#aOff)"/>
+      <path class="e-off" d="M298 485 H370" marker-end="url(#aOff)"/>
+      <path class="e-off" d="M298 565 H370" marker-end="url(#aOff)"/>
+      <text class="lbl" x="334" y="398" text-anchor="middle">читает</text>
+
+      <!-- слияние и дальше -->
+      <rect class="n-on" x="640" y="465" width="170" height="120" rx="8"/>
+      <text class="t1" x="725" y="505" text-anchor="middle">Слияние RRF k=60</text>
+      <text class="t2" x="725" y="524" text-anchor="middle">+ бонус своему городу</text>
+      <text class="t2" x="725" y="542" text-anchor="middle">или городам региона</text>
+      <text class="t1" x="725" y="566" text-anchor="middle">топ-300</text>
+      <path class="e-on" d="M584 485 H638" marker-end="url(#aOn)"/>
+      <path class="e-on" d="M584 565 H638" marker-end="url(#aOn)"/>
+
+      <rect class="n-on" x="850" y="385" width="150" height="200" rx="8"/>
+      <text class="t1" x="925" y="478" text-anchor="middle">Объединение</text>
+      <text class="t2" x="925" y="496" text-anchor="middle">~320 кандидатов</text>
+      <text class="t2" x="925" y="513" text-anchor="middle">на запрос</text>
+      <path class="e-on" d="M584 405 H848" marker-end="url(#aOn)"/>
+      <text class="lbl-on" x="716" y="398" text-anchor="middle">~23 новых кандидата</text>
+      <path class="e-on" d="M810 525 H848" marker-end="url(#aOn)"/>
+
+      <rect class="n-on" x="1040" y="440" width="170" height="90" rx="8"/>
+      <text class="t1" x="1125" y="472" text-anchor="middle">59 признаков</text>
+      <text class="t2" x="1125" y="490" text-anchor="middle">скоры · география ·</text>
+      <text class="t2" x="1125" y="506" text-anchor="middle">микрокатегория · карточка</text>
+      <path class="e-on" d="M1000 485 H1038" marker-end="url(#aOn)"/>
+      <path class="e-tr" d="M1100 192 V438" marker-end="url(#aTr)"/>
+      <text class="lbl-tr" x="1108" y="300">вероятность</text>
+      <text class="lbl-tr" x="1108" y="314">микрокатегории</text>
+
+      <rect class="n-on" x="1250" y="440" width="170" height="90" rx="8"/>
+      <text class="t1" x="1335" y="472" text-anchor="middle">Ранжирование</text>
+      <text class="t2" x="1335" y="490" text-anchor="middle">среднее z-оценок</text>
+      <text class="t2" x="1335" y="506" text-anchor="middle">5 моделей</text>
+      <path class="e-on" d="M1210 485 H1248" marker-end="url(#aOn)"/>
+      <path class="e-tr" d="M1300 110 V438" marker-end="url(#aTr)"/>
+      <text class="lbl-tr" x="1308" y="300">веса</text>
+
+      <rect class="n-out" x="1250" y="560" width="170" height="50" rx="8"/>
+      <text class="t-out" x="1335" y="590" text-anchor="middle">Первые 50 → answer.csv</text>
+      <path class="e-on" d="M1335 530 V558" marker-end="url(#aOn)"/>
+    </svg>
+    </div>
+    <div class="legend">
+      <span><svg viewBox="0 0 34 10" aria-hidden="true"><line x1="0" y1="5" x2="34" y2="5" style="stroke:var(--acc);stroke-width:2"/></svg>путь запроса</span>
+      <span><svg viewBox="0 0 34 10" aria-hidden="true"><line x1="0" y1="5" x2="34" y2="5" style="stroke:var(--warm);stroke-width:2;stroke-dasharray:6 4"/></svg>обучение на train и обученные модели</span>
+      <span><svg viewBox="0 0 34 10" aria-hidden="true"><line x1="0" y1="5" x2="34" y2="5" style="stroke:var(--off);stroke-width:1.5"/></svg>индексы корпуса</span>
+    </div>
+  </figure>
+  <div class="whys">
+    <div class="why"><b>Почему несколько источников</b>BM25 — для ключевых слов, дообученная bge-m3 — для семантики в домене Avito.</div>
+    <div class="why"><b>Почему область поиска</b>Услуги локальны — ищем в городе запроса и рядом с ним, а не по всей стране.</div>
+    <div class="why"><b>Почему копии без своего фолда</b>Копия без фолда запроса не видела его ответа — признак для бустинга без утечки.</div>
+  </div>
+  <h3 style="margin-top:6px">Воронка на один запрос</h3>
+  <figure class="archfig">
+    <div class="scroll">
+    <svg class="f" viewBox="0 0 980 476" role="img" aria-label="Воронка на один запрос: 189 тысяч объявлений корпуса, несколько тысяч в области поиска, 700 кандидатов от трёх источников, 300 после слияния, около 320 после объединения, 50 в ответе; доля правильных ответов, оставшихся в списке: 100%, ~98%, 94.2%, 95.1%, 95.1% и 91.6%">
+      <!-- шкала логарифмическая: 10 → 1e6 на 300..900 -->
+      <line class="grid" x1="300" y1="30" x2="300" y2="420"/><text class="fx" x="300" y="444" text-anchor="middle">10</text>
+      <line class="grid" x1="420" y1="30" x2="420" y2="420"/><text class="fx" x="420" y="444" text-anchor="middle">100</text>
+      <line class="grid" x1="540" y1="30" x2="540" y2="420"/><text class="fx" x="540" y="444" text-anchor="middle">1 тыс.</text>
+      <line class="grid" x1="660" y1="30" x2="660" y2="420"/><text class="fx" x="660" y="444" text-anchor="middle">10 тыс.</text>
+      <line class="grid" x1="780" y1="30" x2="780" y2="420"/><text class="fx" x="780" y="444" text-anchor="middle">100 тыс.</text>
+      <text class="fx" x="920" y="464" text-anchor="end">объявлений (лог. шкала)</text>
+      <text class="fr" x="970" y="22" text-anchor="end">ответ ещё в списке</text>
+
+      <text class="fl" x="16" y="56">Корпус</text><text class="fs" x="16" y="73">все объявления</text>
+      <rect class="bar-soft" x="300" y="40" width="513" height="36" rx="4"/><text class="fv" x="822" y="64">189 212</text><text class="fr" x="970" y="64" text-anchor="end">100%</text>
+
+      <text class="fl" x="16" y="116">Область поиска</text><text class="fs" x="16" y="133">город ~4 тыс., регион ~66 тыс.</text>
+      <rect class="bar-soft" x="300" y="100" width="312" height="36" rx="4"/><rect class="bar-soft" x="612" y="100" width="146" height="36" rx="4" style="opacity:.55"/><text class="fv" x="767" y="124">~4–66 тыс.</text><text class="fr" x="970" y="124" text-anchor="end">~98%</text>
+
+      <text class="fl" x="16" y="176">Три источника</text><text class="fs" x="16" y="193">300 BM25 + 300 bge-m3 + 100</text>
+      <rect class="bar" x="300" y="160" width="221" height="36" rx="4"/><text class="fv" x="530" y="184">700</text>
+
+      <text class="fl" x="16" y="236">Слияние RRF</text><text class="fs" x="16" y="253">+ бонус за город</text>
+      <rect class="bar" x="300" y="220" width="177" height="36" rx="4"/><text class="fv" x="486" y="244">300</text><text class="fr" x="970" y="244" text-anchor="end">94.2%</text>
+
+      <text class="fl" x="16" y="296">Объединение</text><text class="fs" x="16" y="313">+ ~23 от дообученной модели</text>
+      <rect class="bar" x="300" y="280" width="181" height="36" rx="4"/><text class="fv" x="490" y="304">~320</text><text class="fr" x="970" y="304" text-anchor="end">95.1%</text>
+
+      <text class="fl" x="16" y="356">Ранжирование</text><text class="fs" x="16" y="373">5 × LightGBM, 59 признаков</text>
+      <rect class="bar" x="300" y="340" width="181" height="36" rx="4" style="opacity:.55"/><text class="fv" x="490" y="364">~320, новый порядок</text><text class="fr" x="970" y="364" text-anchor="end">95.1%</text>
+
+      <text class="fl" x="16" y="406">Ответ</text><text class="fs" x="16" y="423">первые 50</text>
+      <rect class="bar" x="300" y="390" width="84" height="36" rx="4"/><text class="fv" x="393" y="414">50</text><text class="fr" x="970" y="414" text-anchor="end">91.6% = Recall@50</text>
+    </svg>
+    </div>
+  </figure>
+
+</section>
+
+<section id="vklad">
+  <div class="eyebrow">Главное</div>
+  <h2>Вклад шагов</h2>
+  <p>Recall@50 на валидации после каждого шага. Доверительные интервалы и ссылки на отчёты — в разделе «Прирост по шагам».</p>
+  <div class="panel">
+    <svg class="chart" id="chWaterfall" viewBox="0 0 760 330" role="img" aria-label="Каскад прироста Recall@50 по шагам"></svg>
+  </div>
+
+</section>
+
+<section id="lessons">
+  <div class="eyebrow">Главное</div>
+  <h2>Выводы</h2>
+  <p class="muted">Что я вынес из этой работы.</p>
+  <ul class="plain">
+    <li><b>Больше всего дали география и бустинг.</b> Услуги ищут рядом с собой. Правильный город важнее точной формулировки. Бустинг смотрит не только на текст, но и на карточку объявления и расстояние до него.</li>
+    <li><b>Дообучение эмбеддера помогло на новых запросах.</b> В тесте таких почти две трети. Модель выучила, как люди пишут запросы на Avito.</li>
+    <li><b>Моя валидация недооценивала дообучение.</b> На валидации прирост был меньше, чем на платформе. Так случилось дважды: +0.012 против +0.017 и +0.003 против +0.008.</li>
+    <li><b>Тяжёлые модели почти ничего не дали.</b> Я пробовал cross-encoder и Qwen3. Считаются они намного дольше, а прирост оказался в пределах шума.</li>
+    <li><b>Мягкие правила лучше жёстких.</b> Жёсткий фильтр выбрасывает часть правильных ответов. Небольшой бонус работает лучше.</li>
+    <li><b>Популярность здесь обманчива.</b> На валидации она выглядит сильной. Но ответы теста почти никогда не выбирали в train. Поэтому каждый шаг я проверял на ответах без истории.</li>
+    <li><b>Бустинг нужно учить на train, а не на валидации.</b> Модель на 3000 запросах валидации перенеслась на платформу плохо. Модель на 21 тыс. запросах из train — заметно лучше.</li>
+    <li><b>Оставшиеся ошибки трудно исправить текстом.</b> Часто человек выбирает общее объявление, хотя выше стоят более точные. А около 5% правильных ответов вообще не попадают в кандидаты.</li>
+  </ul>
+</section>
+
+<section id="details" style="gap:6px;border-top:2px solid var(--ink);padding-top:22px">
+  <h2>Подробности</h2>
+  <p class="muted">Всё, на чём основаны мои выводы выше: таблицы с доверительными интервалами, кривые, валидация, журнал экспериментов и проверка воспроизводимости.</p>
+</section>
+
+<section id="vklad-det">
+  <div class="eyebrow">Подробности</div>
+  <h2>Прирост по шагам</h2>
+  <p>Приросты и 95% доверительные интервалы (ДИ) я посчитал парным бутстрепом по запросам, 2000 повторов.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>шаг</th><th class="n">Recall@50</th><th class="n">прирост [95% ДИ]</th><th>отчёт</th></tr></thead>
+    <tbody>
+      <tr><td>BM25 (стемы), поиск в своём городе</td><td class="n">0.745</td><td class="n">по всему корпусу 0.414</td><td><a href="../eda/06_sparse.md"><code>06_sparse</code></a></td></tr>
+      <tr><td>+ bge-m3, слияние RRF k=60</td><td class="n">0.802</td><td class="n">+0.058 [+0.047; +0.069]</td><td><a href="../eda/07_dense.md"><code>07_dense</code></a>, <a href="../eda/08_hybrid.md"><code>08_hybrid</code></a></td></tr>
+      <tr><td>+ географические правила (соседние и часто выбираемые города, регион → его города, мягкие бонусы)</td><td class="n">0.858</td><td class="n">+0.056 [+0.046; +0.066]</td><td><a href="../eda/10_geo.md"><code>10_geo</code></a></td></tr>
+      <tr><td>+ бонусы: «Вид/Тип услуги», вероятность микрокатегории, её доля среди первых 20 кандидатов — сабмит 1</td><td class="n">0.869</td><td class="n">+0.011 [+0.006; +0.016]; на отложенной половине [+0.004; +0.018]</td><td><a href="../eda/11_meta_boost.md"><code>11_meta_boost</code></a></td></tr>
+      <tr><td>градиентный бустинг LightGBM на 21 тыс. запросов train вместо бонусов — сабмит 3</td><td class="n">0.901</td><td class="n">+0.032 [+0.024; +0.040]</td><td><a href="../eda/18_ltr_big.md"><code>18_ltr_big</code></a></td></tr>
+      <tr class="hl"><td><b>+ дообученная bge-m3 (LoRA на всех 219 тыс. пар): признак для бустинга и новые кандидаты — сабмит 5</b></td><td class="n"><b>0.9156</b></td><td class="n">+0.015 [+0.008; +0.021]; на отложенной половине +0.012; без истории +0.011; на платформе +0.025</td><td><a href="../eda/19_ltr_ft.md"><code>19_ltr_ft</code></a></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="curves">
+  <div class="eyebrow">Подробности</div>
+  <h2>Кривые Recall@K по этапам</h2>
+  <p>Кривые я пересчитал по сохранённым спискам кандидатов на тех же 3000 запросах. Здесь BM25 на леммах и стемах (0.752), в каскаде выше — на стемах (0.745). Первые шаги поднимают всю кривую, модели бустинга сокращают разрыв между Recall@50 и Recall@300.</p>
+  <div class="panel">
+    <svg class="chart" id="chCurves" viewBox="0 0 760 380" role="img" aria-label="Recall@K для шести этапов, K от 1 до 300"></svg>
+    <div class="legend" id="lgCurves"></div>
+  </div>
+  <div class="panel">
+    <h3>На каком месте лучший правильный ответ</h3>
+    <svg class="chart" id="chBins" viewBox="0 0 760 330" role="img" aria-label="Распределение места лучшего правильного ответа по этапам"></svg>
+    <div class="legend" id="lgBins"></div>
+  </div>
+</section>
+
+<section id="f4-det">
+  <div class="eyebrow">Подробности</div>
+  <h2>Дообученная модель: откуда прирост и нет ли утечки</h2>
+  <div class="grid2">
+    <div class="panel">
+      <h3>Откуда прирост (замер на сабмите 4)</h3>
+      <svg class="chart" id="chAbl" viewBox="0 0 380 220" role="img" aria-label="Абляция: признак, кандидаты, оба"></svg>
+      <p class="cap">Новые кандидаты без признака почти ничего не дают; вместе с признаком +0.012.</p>
+    </div>
+    <div class="panel">
+      <h3>Проверка утечки (модели сабмита 5)</h3>
+      <svg class="chart" id="chLeak" viewBox="0 0 380 220" role="img" aria-label="Выигрыш косинуса дообученной модели у правильного ответа, обучающие запросы и валидация по фильтру"></svg>
+      <p class="cap">Насколько косинус дообученной модели у правильного ответа выше, чем у базовой; в скобках число запросов (обучающие / валидация). Внутри слоёв по фильтру обучающие запросы и валидация близки — утечки нет.</p>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="eyebrow">Подробности</div>
+  <h2>Какие признаки сильнее всего повлияли на ранжирование?</h2>
+  <p>Я посчитал SHAP: LightGBM раскладывает оценку каждого кандидата на вклады признаков. Модуль вклада я усреднил по 150 случайным запросам валидации (48 тыс. кандидатов) и 5 моделям и перевёл в доли. Чем больше доля, тем сильнее признак в среднем двигает кандидатов вверх или вниз. Замер сделан на моделях сабмита 4.</p>
+  <div class="panel">
+    <svg class="chart" id="chImp" viewBox="0 0 760 490" role="img" aria-label="Доля среднего модуля SHAP для 15 самых влиятельных признаков"></svg>
+    <div class="legend"><span><i class="sq" style="background:var(--s2)"></i>признаки дообученной bge-m3</span><span><i class="sq" style="background:var(--val)"></i>остальные признаки</span></div>
+  </div>
+  <p>Те же доли SHAP, сложенные по группам признаков:</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>группа признаков</th><th class="n">доля влияния (SHAP)</th></tr></thead>
+    <tbody>
+      <tr><td>скоры поиска: RRF, BM25, косинус базовой bge-m3, оценка схемы сабмита 1</td><td class="n">25%</td></tr>
+      <tr><td>дообученная bge-m3: косинус, его ранги и нормировки, флаг нового кандидата</td><td class="n">24%</td></tr>
+      <tr><td>география: доля пары городов, расстояние, свой город</td><td class="n">18%</td></tr>
+      <tr><td>микрокатегория и фильтры</td><td class="n">17%</td></tr>
+      <tr><td>качество карточки: отзывы, длина описания, рейтинг, цена</td><td class="n">11%</td></tr>
+      <tr><td>слова запроса в тексте объявления</td><td class="n">3%</td></tr>
+      <tr><td>свойства самого запроса</td><td class="n">2%</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="slices">
+  <div class="eyebrow">Подробности</div>
+  <h2>Срезы итоговой схемы</h2>
+  <p>Recall@50 по срезам для трёх схем. Главный срез для теста — «текста нет в train»: таких запросов в тесте 63%. Самое слабое место — поиск по региону или по всей России.</p>
+  <div class="panel">
+    <svg class="chart" id="chSlices" viewBox="0 0 760 420" role="img" aria-label="Recall@50 по срезам для трёх схем"></svg>
+    <div class="legend"><span><i class="sq" style="background:var(--s4)"></i>гибрид + география + бонусы (№1)</span><span><i class="sq" style="background:var(--plat)"></i>бустинг на train (№3)</span><span><i class="sq" style="background:var(--val)"></i>итог (№5)</span></div>
+  </div>
+
+</section>
+
+<section id="validation">
+  <div class="eyebrow">Подробности</div>
+  <h2>Валидация</h2>
+  <p>Случайный сплит строк train завысил бы метрику: в тесте каждый текст запроса встречается один раз, а ответ ищется в отдельном корпусе. Поэтому я построил валидацию, которая повторяет устройство теста.</p>
+  <div class="grid2">
+    <div class="card">
+      <h3>Как построена</h3>
+      <ul class="plain">
+        <li>Сгруппировал строки train в запросы: текст + локация + фильтры.</li>
+        <li>Взял только запросы, у которых выбранное объявление есть в корпусе (26&nbsp;549 запросов, 12&nbsp;174 текста).</li>
+        <li>Оставил один запрос на текст и стратифицировал тексты по 4 слоям «текст есть в train × есть фильтр» в пропорциях теста. 3000 запросов, seed 42.</li>
+        <li>Исключил из обучения все 3776 строк отложенных запросов. Проверил утечку: 0 строк.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Как сравнивали модели</h3>
+      <ul class="plain">
+        <li>Стандартная ошибка Recall@50 на одной валидации std/√n ≈ 0.005–0.006 при значении около 0.9 (у бейзлайна со значением 0.15 — 0.0065, его разброс по 5 значениям seed — 0.0034).</li>
+        <li>Модели сравнивал парным бутстрепом по запросам (2000 повторов).</li>
+        <li>Подбираемые веса выбирал на одной случайной половине валидации, а результат проверял на другой.</li>
+        <li>Отдельно смотрел срез — ответы, которые ни разу не выбирали в train: у 53% ответов валидации выборы в train есть, у ответов теста их почти нет.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="experiments">
+  <div class="eyebrow">Подробности</div>
+  <h2>Все эксперименты</h2>
+  <p>Каждая строка — эксперимент и решение по нему: вошло в итоговую схему или нет. Подробности, таблицы и примеры — в отчёте, указанном в колонке «отчёт». Если не сказано иное, ДИ — 95%, парный бутстреп на всех 3000 запросах. Всего я провёл больше экспериментов; здесь те, по которым я принимал решение.</p>
+  <div class="filters" role="group" aria-label="Фильтр экспериментов">
+    <button type="button" data-f="all" aria-pressed="true">все</button>
+    <button type="button" data-f="in" aria-pressed="false">вошло в итог</button>
+    <button type="button" data-f="out" aria-pressed="false">не вошло</button>
+  </div>
+  <div class="tablewrap"><table class="exp" id="expTable">
+    <thead><tr><th>№</th><th>эксперимент</th><th>результат</th><th>итог</th><th>отчёт</th></tr></thead>
+    <tbody></tbody>
+  </table></div>
+</section>
+
+<section id="repro">
+  <div class="eyebrow">Подробности</div>
+  <h2>Воспроизводимость</h2>
+  <div class="cards">
+    <div class="card">
+      <h3>На чём я работал</h3>
+      <ul class="plain">
+        <li>Ноутбук: RTX 3070 Laptop 8 ГБ, 12 потоков CPU, 26 ГБ RAM. На нём всё, кроме итогового дообучения: индексы, кодирование корпуса, признаки, бустинг и прогоны пайплайна.</li>
+        <li>Итоговое дообучение bge-m3 (общая модель и 5 копий по фолдам): три арендованных A100 80 ГБ на RunPod, по две модели на карту, 40–43 мин на модель.</li>
+        <li>Прогон пайплайна на ноутбуке: 2.7 мин на валидации, 2.4 мин на тесте; пик RAM 11 ГБ, видеопамяти 1.4 ГБ.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Как воспроизвести</h3>
+      <p>Вся инструкция — в <a href="../README.md"><code>README.md</code></a>, раздел «Как воспроизвести»: требования к железу, быстрая проверка без обучения, обучение одной командой <code>bash train_all.sh</code>, запуск пайплайна и чего ожидать.</p>
+    </div>
+    <div class="card">
+      <h3>Как я проверил</h3>
+      <ul class="plain">
+        <li>Скопировал репозиторий в чистую папку и положил туда только данные и то, что создаёт <code>train_all.sh</code>.</li>
+        <li><code>pipeline.py --mode val</code> дал Recall@50 = 0.9156, как у сабмита 5. Ответ на тест совпал с сабмитом 5 на 99.8%: эмбеддинги запросов для сабмита я считал на A100, а пайплайн — на RTX 3070, и шум fp16 немного переставляет кандидатов на границе.</li>
+        <li>Команды обучения из <code>train_all.sh</code> прогнал на малом объёме: всё запускается.</li>
+        <li>Новое окружение строго из <code>requirements.txt</code> ставится за ~1 мин; <code>validation.py</code> пересобирает валидацию побитово.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="appendix">
+  <div class="eyebrow">Подробности</div>
+  <h2>Цифры к выводам</h2>
+  <p>Для каждого вывода из раздела «Выводы» — цифра, на которой он держится, и отчёт, где её можно проверить.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>вывод</th><th>значение</th><th>отчёт</th></tr></thead>
+    <tbody>
+      <tr><td>Больше всего дали география и бустинг</td><td>география +0.056, бустинг на train +0.032 — два крупнейших шага после гибрида; в запросах по городу 93% выборов — из своего города</td><td><a href="../eda/10_geo.md"><code>10_geo</code></a>, <a href="../eda/18_ltr_big.md"><code>18_ltr_big</code></a></td></tr>
+      <tr><td>Дообучение эмбеддера помогло на новых запросах</td><td>к бустингу без него: на запросах, текста которых нет в train, +0.020; на знакомых +0.006</td><td><a href="../eda/19_ltr_ft.md"><code>19_ltr_ft</code></a></td></tr>
+      <tr><td>Моя валидация недооценивала дообучение</td><td>сабмит 4: +0.012 на валидации, +0.017 на платформе; сабмит 5: +0.003 и +0.008</td><td><a href="../eda/19_ltr_ft.md"><code>19_ltr_ft</code></a></td></tr>
+      <tr><td>Тяжёлые модели почти ничего не дали</td><td>cross-encoder +0.008 [−0.003; +0.019] при ~1 с на запрос на GPU; Qwen3 третьим источником +0.001</td><td><a href="../eda/12_rerank.md"><code>12_rerank</code></a>, <a href="../eda/13_qwen_ensemble.md"><code>13_qwen_ensemble</code></a></td></tr>
+      <tr><td>Мягкие правила лучше жёстких</td><td>жёсткий фильтр по микрокатегории теряет ~15% правильных ответов; общая область поиска без приоритета своего города −0.013</td><td><a href="../eda/00_summary.md"><code>00_summary</code></a>, <a href="../eda/10_geo.md"><code>10_geo</code></a></td></tr>
+      <tr><td>Популярность здесь обманчива</td><td>«популярное в городе»: 0.274 на ответах, которые выбирали в train, и 0.000 на остальных</td><td><a href="../eda/05_validation.md"><code>05_validation</code></a></td></tr>
+      <tr><td>Бустинг нужно учить на train, а не на валидации</td><td>платформа: 0.8717 у бустинга на 3000 запросах валидации против 0.8792 у бустинга на 21 тыс. запросах из train</td><td><a href="../eda/16_ltr.md"><code>16_ltr</code></a>, <a href="../eda/18_ltr_big.md"><code>18_ltr_big</code></a></td></tr>
+      <tr><td>Оставшиеся ошибки трудно исправить текстом</td><td>в 40% из 20 разобранных промахов человек выбрал общее объявление, хотя выше стояли более точные; у 4.8% запросов правильного ответа нет среди кандидатов</td><td><a href="../eda/14_errors.md"><code>14_errors</code></a></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<footer>Откуда цифры: приросты и срезы — из отчётов <code>eda/00–19</code>, результаты платформы — из <a href="../attempts.md"><code>attempts.md</code></a>, кривые Recall@K и воронка — пересчитаны мной по спискам кандидатов.</footer>
+</main>
+</div>
+
+<script>
+(function(){
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent, text){ const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text !== undefined) e.textContent = text; if (parent) parent.appendChild(e); return e; }
+const fmt = (v, d=3) => v.toFixed(d);
+
+/* ---------- 1. сабмита ---------- */
+(function(){
+  const svg = document.getElementById("chSubs");
+  const subs = [["№1 география + бонусы", 0.869, 0.8640], ["№2 бустинг на валидации", 0.893, 0.8717], ["№3 бустинг на train", 0.901, 0.8792], ["№4 + дообученная bge-m3|на 64 тыс. пар", 0.913, 0.8960], ["№5 дообученная bge-m3|на всех 219 тыс. пар", 0.9156, 0.9041]];
+  const L = 56, R = 744, T = 20, B = 222, lo = 0.84, hi = 0.92;
+  const y = v => B - (v - lo) / (hi - lo) * (B - T);
+  for (let v = 0.84; v <= 0.9201; v += 0.02) { el("line", {x1:L, x2:R, y1:y(v), y2:y(v), class:"grid"}, svg); el("text", {x:L-8, y:y(v)+4, "text-anchor":"end", class:"t-mono"}, svg, v.toFixed(2)); }
+  const gw = (R - L) / subs.length, bw = 44;
+  subs.forEach((s, i) => {
+    const cx = L + gw * i + gw / 2;
+    [[s[1], "var(--val)", -bw/2 - 3, "t-val"], [s[2], "var(--plat)", bw/2 + 3, "t-plat"]].forEach(([v, c, dx, cls]) => {
+      el("rect", {x: cx + dx - bw/2, y: y(v), width: bw, height: B - y(v), style: `fill:${c}`, rx: 3}, svg);
+      el("text", {x: cx + dx, y: y(v) - 6, "text-anchor": "middle", class: "t-mono " + cls}, svg, v.toFixed(v === s[2] ? 4 : 3));
+    });
+    el("text", {x: cx, y: B + 20, "text-anchor": "middle", class: "t-ink"}, svg, s[0].split(" ")[0]);
+    s[0].split(" ").slice(1).join(" ").split("|").forEach((ln, j) => el("text", {x: cx, y: B + 36 + 15 * j, "text-anchor": "middle"}, svg, ln));
+  });
+  el("line", {x1:L, x2:R, y1:B, y2:B, class:"axis"}, svg);
+})();
+
+/* ---------- 2. каскад ---------- */
+(function(){
+  const svg = document.getElementById("chWaterfall");
+  const st = [["BM25, свой город", 0, 0.7445, "base"], ["bge-m3, RRF", 0.7445, 0.8023], ["географические правила", 0.8023, 0.8581], ["бонусы метаданных", 0.8581, 0.8690], ["бустинг на train", 0.8690, 0.9011], ["дообученная bge-m3", 0.9011, 0.9156], ["итог", 0, 0.9156, "total"]];
+  const L = 56, R = 744, T = 20, B = 262, lo = 0.70, hi = 0.93;
+  const y = v => B - (Math.max(v, lo) - lo) / (hi - lo) * (B - T);
+  for (let v = 0.70; v <= 0.9301; v += 0.05) { el("line", {x1:L, x2:R, y1:y(v), y2:y(v), class:"grid"}, svg); el("text", {x:L-8, y:y(v)+4, "text-anchor":"end", class:"t-mono"}, svg, v.toFixed(2)); }
+  const gw = (R - L) / st.length, bw = gw * 0.56;
+  st.forEach((s, i) => {
+    const x = L + gw * i + (gw - bw) / 2, a = s[1], b = s[2];
+    const kind = s[3];
+    const top = y(b), bot = kind ? B : y(a);
+    const fill = kind === "total" ? "var(--val)" : kind === "base" ? "var(--s1)" : "var(--good)";
+    el("rect", {x, y: top, width: bw, height: Math.max(bot - top, 1.5), style: `fill:${fill}`, rx: 2}, svg);
+    const lab = kind ? b.toFixed(3) : "+" + (b - a).toFixed(3);
+    el("text", {x: x + bw/2, y: top - 6, "text-anchor": "middle", class: "t-mono t-ink t-bold"}, svg, lab);
+    if (!kind) el("text", {x: x + bw/2, y: bot + 14, "text-anchor": "middle", class: "t-mono", style: "font-size:10.5px"}, svg, b.toFixed(3));
+    if (i < st.length - 1 && !(st[i+1][3] === "total")) el("line", {x1: x + bw, x2: x + gw, y1: top, y2: top, class: "grid", "stroke-dasharray": "3 3"}, svg);
+    const words = s[0].split(" "); const mid = Math.ceil(words.length / 2);
+    el("text", {x: x + bw/2, y: B + 34, "text-anchor": "middle", class: "t-ink"}, svg, words.slice(0, mid).join(" "));
+    el("text", {x: x + bw/2, y: B + 50, "text-anchor": "middle"}, svg, words.slice(mid).join(" "));
+  });
+  el("line", {x1:L, x2:R, y1:B, y2:B, class:"axis"}, svg);
+})();
+
+/* ---------- 3. кривые ---------- */
+const KS = [1, 5, 10, 20, 30, 50, 100, 200, 300];
+const CURVES = [
+  ["BM25 (леммы + стемы), свой город", "var(--s1)", [0.2239,0.4485,0.5564,0.6445,0.6986,0.7519,0.8059,0.8454,0.8662], "4 4"],
+  ["bge-m3, свой город", "var(--s2)", [0.2194,0.4381,0.5423,0.6498,0.7070,0.7643,0.8207,0.8609,0.8846], "4 4"],
+  ["гибрид + географические правила", "var(--s3)", [0.2545,0.5142,0.6382,0.7531,0.8058,0.8581,0.9011,0.9316,0.9421], ""],
+  ["гибрид + география + бонусы (№1)", "var(--s4)", [0.2478,0.5247,0.6487,0.7628,0.8184,0.8690,0.9138,0.9379,0.9421], ""],
+  ["бустинг на train (№3)", "var(--plat)", [0.3081,0.6012,0.7206,0.8162,0.8578,0.9011,0.9304,0.9404,0.9421], ""],
+  ["итог (№5)", "var(--val)", [0.3233,0.6224,0.7383,0.8387,0.8794,0.9156,0.9429,0.9508,0.9511], ""]
+];
+(function(){
+  const svg = document.getElementById("chCurves");
+  const L = 52, R = 690, T = 16, B = 340, lo = 0.2, hi = 1.0;
+  const xs = KS.map((k, i) => L + (Math.log(k) / Math.log(300)) * (R - L));
+  const y = v => B - (v - lo) / (hi - lo) * (B - T);
+  for (let v = 0.2; v <= 1.0001; v += 0.1) { el("line", {x1:L, x2:R, y1:y(v), y2:y(v), class:"grid"}, svg); el("text", {x:L-8, y:y(v)+4, "text-anchor":"end", class:"t-mono"}, svg, v.toFixed(1)); }
+  KS.forEach((k, i) => el("text", {x: xs[i], y: B + 18, "text-anchor": "middle", class: "t-mono"}, svg, k));
+  el("text", {x: (L + R) / 2, y: B + 36, "text-anchor": "middle"}, svg, "K (логарифмическая шкала)");
+  const i50 = KS.indexOf(50);
+  el("line", {x1: xs[i50], x2: xs[i50], y1: T, y2: B, class: "axis", "stroke-dasharray": "2 4"}, svg);
+  el("text", {x: xs[i50] + 4, y: T + 12, class: "t-ink"}, svg, "K = 50");
+  const lg = document.getElementById("lgCurves");
+  const ends = [];
+  CURVES.forEach(([nm, c, vals, dash], j) => {
+    const d = vals.map((v, i) => (i ? "L" : "M") + xs[i].toFixed(1) + " " + y(v).toFixed(1)).join(" ");
+    const last = j === CURVES.length - 1;
+    el("path", {d, style: `fill:none;stroke:${c};stroke-width:${last ? 3 : 1.8}`, "stroke-dasharray": dash}, svg);
+    el("circle", {cx: xs[i50], cy: y(vals[i50]), r: last ? 4.5 : 3, style: `fill:${c}`}, svg);
+    ends.push([y(vals[vals.length - 1]), vals[vals.length - 1], c]);
+    const s = document.createElement("span"); s.innerHTML = `<i style="background:${c}"></i>${nm} · @50 <b class="num">${vals[i50].toFixed(3)}</b>`; lg.appendChild(s);
+  });
+  // подписи @300 без наложения
+  // одинаковые значения @300 (три схемы переставляют одни и те же 300 кандидатов) — одной подписью
+  const uniq = {}; ends.forEach(([yy, v, c]) => { const k = v.toFixed(3); (uniq[k] = uniq[k] || {yy, v, c, n: 0}).n++; });
+  const lab = Object.values(uniq).sort((a, b) => a.yy - b.yy); let prev = -99;
+  lab.forEach(({yy, v, c, n}) => { let ty = Math.max(yy + 4, prev + 13); prev = ty; el("text", {x: R + 8, y: ty, class: "t-mono", style: `fill:${n > 1 ? "var(--muted)" : c}`}, svg, v.toFixed(3) + (n > 1 ? " ×" + n : "")); });
+  el("text", {x: R + 8, y: B + 18, class: "t-mono"}, svg, "@300");
+})();
+
+/* ---------- 3б. распределение ранга ---------- */
+(function(){
+  const svg = document.getElementById("chBins");
+  const stages = [["BM25", [0.562,0.193,0.053,0.0593,0.1327]], ["bge-m3", [0.5477,0.2197,0.055,0.063,0.1147]], ["гибрид, свой город", [0.581,0.223,0.0527,0.0537,0.0897]], ["+ геоправила", [0.6437,0.2163,0.0423,0.0407,0.057]], ["+ бонусы", [0.6543,0.2163,0.044,0.0283,0.057]], ["бустинг (валидация)", [0.7003,0.194,0.036,0.0127,0.057]], ["бустинг (train)", [0.727,0.1757,0.029,0.0113,0.057]], ["итог", [0.7433,0.1737,0.027,0.0077,0.0483]]];
+  const bins = [["1–10", "var(--val)"], ["11–50", "var(--s5)"], ["51–100", "var(--s4)"], ["101–300", "var(--plat)"], ["нет среди кандидатов", "var(--bad)"]];
+  const L = 170, R = 744, T = 8, rowH = 34, bh = 22;
+  stages.forEach(([nm, v], i) => {
+    const yy = T + i * rowH; let x = L;
+    el("text", {x: L - 10, y: yy + bh/2 + 4, "text-anchor": "end", class: nm === "итог" ? "t-ink t-bold" : "t-ink"}, svg, nm);
+    v.forEach((p, j) => {
+      const w = p * (R - L);
+      el("rect", {x, y: yy, width: Math.max(w - 1, 0), height: bh, style: `fill:${bins[j][1]};opacity:${j === 1 ? 0.55 : 1}`}, svg);
+      if (w > 34) el("text", {x: x + w/2, y: yy + bh/2 + 4, "text-anchor": "middle", class: "t-mono", style: "fill:var(--surface);font-size:11px"}, svg, Math.round(p * 1000) / 10 + "%");
+      x += w;
+    });
+  });
+  const lg = document.getElementById("lgBins");
+  bins.forEach(([nm, c], j) => { const s = document.createElement("span"); s.innerHTML = `<i class="sq" style="background:${c};opacity:${j === 1 ? 0.55 : 1}"></i>${nm}`; lg.appendChild(s); });
+})();
+
+/* ---------- 4. срезы ---------- */
+(function(){
+  const svg = document.getElementById("chSlices");
+  const sl = [["все", 3000, 0.869, 0.9011, 0.9156], ["текст есть в train", 1120, 0.8853, 0.9221, 0.9276], ["текста нет в train", 1880, 0.8593, 0.8886, 0.9085], ["поиск по городу", 2471, 0.8872, 0.9184, 0.9341], ["регион или вся Россия", 529, 0.7842, 0.8201, 0.8296], ["с фильтром", 1108, 0.8731, 0.9113, 0.9293], ["без фильтра", 1892, 0.8666, 0.8951, 0.9076], ["ответ выбирали в train", 1598, 0.8579, 0.9019, 0.9198], ["ответ не выбирали в train", 1402, 0.8816, 0.9001, 0.9108]];
+  const L = 200, R = 640, T = 26, rowH = 42, lo = 0.76, hi = 0.95;
+  const x = v => L + (v - lo) / (hi - lo) * (R - L);
+  for (let v = 0.76; v <= 0.9501; v += 0.02) { el("line", {x1: x(v), x2: x(v), y1: T - 10, y2: T + sl.length * rowH - 16, class: "grid"}, svg); el("text", {x: x(v), y: T - 14, "text-anchor": "middle", class: "t-mono"}, svg, v.toFixed(2)); }
+  sl.forEach(([nm, n, a, b, c], i) => {
+    const yy = T + i * rowH + 8;
+    el("text", {x: L - 12, y: yy + 4, "text-anchor": "end", class: "t-ink"}, svg, nm);
+    el("text", {x: L - 12, y: yy + 18, "text-anchor": "end", class: "t-mono", style: "font-size:10.5px"}, svg, "n = " + n);
+    el("line", {x1: x(a), x2: x(c), y1: yy, y2: yy, style: "stroke:var(--line);stroke-width:3"}, svg);
+    el("circle", {cx: x(a), cy: yy, r: 5, style: "fill:var(--s4)"}, svg);
+    el("circle", {cx: x(b), cy: yy, r: 5, style: "fill:var(--plat)"}, svg);
+    el("circle", {cx: x(c), cy: yy, r: 6, style: "fill:var(--val)"}, svg);
+    el("text", {x: R + 10, y: yy + 4, class: "t-mono t-val"}, svg, c.toFixed(3));
+    el("text", {x: R + 58, y: yy + 4, class: "t-mono"}, svg, "+" + (c - b).toFixed(3));
+  });
+  el("text", {x: R + 10, y: T - 14, class: "t-ink"}, svg, "итог");
+  el("text", {x: R + 58, y: T - 14, class: "t-ink"}, svg, "+ к №3");
+})();
+
+/* ---------- 4б. абляция и утечка ---------- */
+(function(){
+  const svg = document.getElementById("chAbl");
+  const v = [["сабмит №3", 0.9011, "var(--plat)"], ["+ только кандидаты", 0.9022, "var(--s1)"], ["+ только признак", 0.9085, "var(--s2)"], ["+ оба = сабмит №4", 0.9130, "var(--val)"]];
+  const L = 128, R = 330, T = 10, rowH = 46, lo = 0.895, hi = 0.915;
+  const x = t => L + (t - lo) / (hi - lo) * (R - L);
+  [0.895, 0.905, 0.915].forEach(t => { el("line", {x1: x(t), x2: x(t), y1: T, y2: T + v.length * rowH - 10, class: "grid"}, svg); el("text", {x: x(t), y: T + v.length * rowH + 6, "text-anchor": "middle", class: "t-mono"}, svg, t.toFixed(3)); });
+  v.forEach(([nm, t, c], i) => { const yy = T + i * rowH; el("text", {x: L - 8, y: yy + 19, "text-anchor": "end", class: "t-ink"}, svg, nm); el("rect", {x: L, y: yy + 6, width: x(t) - L, height: 20, style: `fill:${c}`, rx: 2}, svg); el("text", {x: x(t) + 6, y: yy + 20, class: "t-mono t-ink"}, svg, t.toFixed(4)); });
+})();
+(function(){
+  const svg = document.getElementById("chLeak");
+  const g = [["новый текст, без фильтра", 0.013, 0.009, "465 / 1319"], ["новый текст, с фильтром", 0.056, 0.058, "1067 / 455"], ["знакомый текст, без фильтра", 0.040, 0.021, "1081 / 468"], ["знакомый текст, с фильтром", 0.093, 0.083, "2492 / 613"]];
+  const L = 178, R = 330, T = 8, rowH = 46, lo = 0, hi = 0.10;
+  const x = t => L + (t - lo) / (hi - lo) * (R - L);
+  [0, 0.05, 0.10].forEach(t => { el("line", {x1: x(t), x2: x(t), y1: T, y2: T + g.length * rowH - 6, class: t === 0 ? "axis" : "grid"}, svg); el("text", {x: x(t), y: T + g.length * rowH + 10, "text-anchor": "middle", class: "t-mono"}, svg, (t > 0 ? "+" : "") + t.toFixed(2)); });
+  g.forEach(([nm, p, vv, n], i) => {
+    const yy = T + i * rowH;
+    const w = nm.split(", ");
+    el("text", {x: L - 8, y: yy + 14, "text-anchor": "end", class: "t-ink"}, svg, w[0]);
+    el("text", {x: L - 8, y: yy + 29, "text-anchor": "end"}, svg, w[1] + " (" + n + ")");
+    el("text", {x: Math.max(x(p), x(0)) + 4, y: yy + 15, class: "t-mono", style: "font-size:10.5px"}, svg, (p >= 0 ? "+" : "") + p.toFixed(3));
+    el("text", {x: Math.max(x(vv), x(0)) + 4, y: yy + 31, class: "t-mono", style: "font-size:10.5px"}, svg, (vv >= 0 ? "+" : "") + vv.toFixed(3));
+    el("rect", {x: Math.min(x(0), x(p)), y: yy + 4, width: Math.abs(x(p) - x(0)), height: 14, style: "fill:var(--s3)", rx: 2}, svg);
+    el("rect", {x: Math.min(x(0), x(vv)), y: yy + 20, width: Math.max(Math.abs(x(vv) - x(0)), 1), height: 14, style: "fill:var(--val)", rx: 2}, svg);
+  });
+  el("rect", {x: L, y: T + g.length * rowH + 16, width: 10, height: 10, style: "fill:var(--s3)"}, svg); el("text", {x: L + 14, y: T + g.length * rowH + 25}, svg, "обучающие запросы");
+  el("rect", {x: L, y: T + g.length * rowH + 30, width: 10, height: 10, style: "fill:var(--val)"}, svg); el("text", {x: L + 14, y: T + g.length * rowH + 39}, svg, "валидация");
+  svg.setAttribute("viewBox", "0 0 380 " + (T + g.length * rowH + 46));
+})();
+
+/* ---------- 5. важность ---------- */
+(function(){
+  const svg = document.getElementById("chImp");
+  const imp = [["косинус дообученной bge-m3 − максимум в запросе", 0.1639, 1], ["вероятность микрокатегории / максимум в запросе", 0.0628], ["доля пары городов в train", 0.0543], ["перцентиль оценки схемы сабмита 1", 0.0510], ["доля пары городов в train, логарифм", 0.0441], ["скор RRF / максимум в запросе", 0.0428], ["вероятность микрокатегории", 0.0425], ["расстояние до города запроса", 0.0421], ["BM25 / максимум в запросе", 0.0393], ["длина описания", 0.0374], ["доля кандидатов в той же локации", 0.0327], ["число отзывов", 0.0287], ["место микрокатегории в прогнозе", 0.0264], ["доля слов запроса в тексте", 0.0263], ["косинус дообученной bge-m3, z-оценка", 0.0220, 1]];
+  const L = 330, R = 690, T = 6, rowH = 30, hi = 0.18;
+  const x = v => L + v / hi * (R - L);
+  [0, 0.05, 0.10, 0.15].forEach(t => { el("line", {x1: x(t), x2: x(t), y1: T, y2: T + imp.length * rowH, class: t === 0 ? "axis" : "grid"}, svg); el("text", {x: x(t), y: T + imp.length * rowH + 16, "text-anchor": "middle", class: "t-mono"}, svg, Math.round(t * 100) + "%"); });
+  imp.forEach(([nm, v, ft], i) => {
+    const yy = T + i * rowH;
+    el("text", {x: L - 10, y: yy + 17, "text-anchor": "end", class: "t-ink", style: "font-size:12px"}, svg, nm);
+    el("rect", {x: L, y: yy + 5, width: Math.max(x(v) - L, 1.5), height: 16, style: `fill:${ft ? "var(--s2)" : "var(--val)"}`, rx: 2}, svg);
+    el("text", {x: x(v) + 6, y: yy + 17, class: "t-mono"}, svg, (v * 100).toFixed(1) + "%");
+  });
+})();
+
+/* ---------- 6. эксперименты ---------- */
+const EXP = [
+ ["Валидация"],
+ ["V1", "Валидация, повторяющая устройство теста: один запрос на текст, 4 слоя «текст есть в train × есть фильтр» в пропорциях теста", "3000 запросов; доли слоёв 46.77/15.90/16.30/21.03% против 46.74/15.91/16.31/21.04% у теста; строк отложенных запросов в обучении — 0", "in", "используется везде", "05_validation"],
+ ["Лексический поиск"],
+ ["S1", "BM25 + Snowball, 3 варианта документа: заголовок + параметры + описание / то же с заголовком ×2 / без описания", "в своём городе 0.738 / 0.745 / 0.651; по всему корпусу 0.401 / 0.414 / 0.330", "in", "заголовок ×2", "06_sparse"],
+ ["S2", "Поиск в своём городе против поиска по всему корпусу", "0.414 → 0.745; регионы 0.487 в обоих режимах — главное слабое место", "in", "→ географические правила", "06_sparse"],
+ ["S3", "Стемы, леммы (pymorphy3), леммы + стемы", "0.7445 / 0.7492 / 0.7519; леммы + стемы +0.007 [+0.004; +0.011]: улучшение на 27 запросах, ухудшение на 4; в гибриде +0.001", "in", "леммы + стемы", "09_lemma"],
+ ["S4", "Char n-gram TF-IDF против опечаток", "не делал: матрица 189 тыс. × (3–5)-грамм не помещается в память; опечатки — лишь в 2 из 14 разобранных промахов", "out", "не делал", "06_sparse"],
+ ["Эмбеддинги"],
+ ["D1", "Настройки на подкорпусе: фильтры в запросе, int8, длина", "значения фильтров в запросе +0.01…+0.02; int8 −0.03; 128 токенов вместо 64 +0.03…+0.04", "in", "фильтры в запросе", "07_dense"],
+ ["D2", "4 модели на GPU, fp16, 256 токенов", "в своём городе: e5-small 0.752, e5-base 0.738, USER-base 0.728, bge-m3 0.764; bge-m3 − e5-base +0.027 [+0.016; +0.038]", "in", "bge-m3", "07_dense"],
+ ["D3", "Мягкий бонус своему городу для dense-поиска вместо «сначала свой город»", "0.694 против 0.690 — шум", "out", "не взято", "07_dense"],
+ ["Гибрид"],
+ ["H1", "Слияние BM25 и dense (e5-small на CPU): RRF k=10/30/60, взвешенная сумма после min-max и z-нормировки, чередование списков, ярусы", "большинство вариантов 0.770–0.776 (при весе dense 0.7 — 0.744–0.747); RRF k=60 без ярусов 0.7745; RRF не зависит от шкалы скоров", "in", "RRF k=60", "08_hybrid"],
+ ["H2", "Гибрид с разными dense-моделями на GPU", "bge-m3 0.802, e5-small 0.795, USER-base 0.790, e5-base 0.788; гибрид − BM25 +0.058", "in", "BM25 + bge-m3", "08_hybrid"],
+ ["География"],
+ ["G1", "15 правил для регионов: все города региона, пороги доли выборов, поиск ярусами, главный город, город из текста, мягкий бонус", "регионы (без «Вся Россия»): все города 0.661, только города с долей ≥1% 0.776, мягкий бонус +0.02 таким городам 0.785 (было 0.493)", "in", "мягкий бонус", "10_geo"],
+ ["G2", "Правила для городов: соседи до 30/100 км, часто выбираемые города из train, общая область без приоритета своего города, мягкий бонус", "поиск ярусами (сначала свой город) +0.002…+0.005; общая область −0.013, со всеми выбираемыми городами −0.215; бонус 0.015 своему городу: +0.011 [+0.004; +0.017]", "in", "бонус своему городу", "10_geo"],
+ ["G3", "Локация «Вся Россия» (98 запросов)", "маленький бонус +0.005 городам с долей ≥1%: +0.066 [+0.015; +0.122]", "in", "бонус 0.005", "10_geo"],
+ ["G4", "Город из текста запроса («сантехник подольск»)", "все варианты правил ±0; в тесте город в тексте у 4.5% запросов", "out", "не взято", "10_geo"],
+ ["G5", "Итог географических правил: выбор на одной половине валидации, проверка на другой", "0.8023 → 0.8581 (+0.056); регионы 0.528 → 0.773; на отложенных половинах (в обе стороны) +0.047 и +0.060", "in", "географические правила", "10_geo"],
+ ["Метаданные"],
+ ["M1", "Бонус за совпадение «Вида» и «Типа услуги» из фильтра", "«Вид» +0.007 на отложенной половине, «Тип» +0.000; у 97.8% ответов «Вид» совпадает", "in", "«Вид», бонус 0.003", "11_meta_boost"],
+ ["M2", "Жёсткий фильтр по «Виду услуги» с запасом: совпавшие объявления впереди, 0/5/10/20 мест из 50 оставлены остальным", "запас 5 и 10 мест хуже, чем 0 (0.8041 и 0.7999 против 0.8068)", "out", "мягкий бонус лучше", "11_meta_boost"],
+ ["M3", "Классификатор «запрос → микрокатегория»: TF-IDF слов и символов + SGD, 212 классов (все микрокатегории из train; покрывают 99.1% корпуса)", "точность топ-1 0.713, топ-3 0.892; взвешивание примеров по текстам лучше, чем по строкам, на 0.13", "in", "признак", "11_meta_boost"],
+ ["M4", "Бонус за вероятность микрокатегории, за её попадание в топ-k предсказаний и за её долю среди первых 20 кандидатов", "вероятность +0.016 на отложенной половине; доля среди первых 20 (без обучения) +0.012; вместе +0.017 (на гибриде с поиском в своём городе)", "in", "вероятность + доля", "11_meta_boost"],
+ ["M5", "Бонусы поверх гибрида с географическими правилами — сабмит 1", "0.8581 → 0.8690: на всех запросах +0.011 [+0.006; +0.016], на отложенной половине +0.011 [+0.004; +0.018]; платформа 0.8640", "in", "сабмит 1", "11_meta_boost"],
+ ["Переранжирование текстовыми моделями"],
+ ["R1", "Cross-encoder: mMiniLMv2, bge-reranker-v2-m3, Qwen3-Reranker-0.6B; три способа слияния (порядок только по cross-encoder, RRF исходного ранга и ранга cross-encoder, первые 20–30 мест без изменений); K=100 и 200", "на 800 запросах: один cross-encoder хуже гибрида (0.857 против 0.858); RRF с исходным рангом +0.008 [−0.003; +0.019]; ~1 с на запрос на GPU", "out", "прирост в шуме, дорого", "12_rerank"],
+ ["R2", "Qwen3-Embedding-0.6B: отдельно и как третий источник в RRF", "отдельно на 0.026 хуже bge-m3; третьим источником +0.008 на гибриде с поиском в своём городе (столько же, сколько e5-small), в схеме сабмита 1 +0.001 на отложенной половине", "out", "не взято", "13_qwen"],
+ ["Ранжирование градиентным бустингом"],
+ ["L1", "Градиентный бустинг на 3000 запросах валидации: HistGradientBoosting и LightGBM lambdarank, 2 и 5 фолдов, отключение групп признаков", "lambdarank 0.8929 (2 фолда), 0.8976 (5 фолдов); без признаков качества карточки 0.878; без признаков источников 0.891; платформа 0.8717", "out", "сабмит 2, заменён на L2", "16_ltr"],
+ ["L2", "Градиентный бустинг на 21 439 запросах из train: 5 фолдов по тексту, у 60% текстов их строки убраны из обучающих данных фолда, веса примеров под доли теста", "кривая обучения: 2 тыс. запросов — 0.891, 19 тыс. — 0.900; ансамбль 5 моделей 0.9011; платформа 0.8792", "in", "сабмит 3", "18_ltr_big"],
+ ["Дообучение эмбеддера"],
+ ["F1", "bge-m3 + LoRA r=16 на 64 тыс. пар (25.5 мин, 5.1 ГБ)", "dense 0.764 → 0.799 (+0.034 [+0.024; +0.045]); в схеме сабмита 1 вместо bge-m3: 0.869 → 0.885", "in", "метод вошёл; итоговая модель — F4", "17_finetune"],
+ ["F2", "Дообученная e5-small в дополнение к бустингу: позднее слияние рангов и вторая модель поверх него, обученная на валидации", "слияние: лучший вес 0 (прироста нет); вторая модель 0.908, но обучена на 3000 запросах валидации", "out", "заменён на F3", "18_ltr_big"],
+ ["F3", "Перекрёстное дообучение: 5 копий bge-m3, каждая дообучена без своего фолда (на RTX 4090); косинус как признак + топ-100 кандидатов", "0.9130, +0.012 [+0.006; +0.018]; только признак 0.9085, только кандидаты 0.9022; платформа 0.8960", "in", "сабмит 4", "19_ltr_ft"],
+ ["F4", "Дообучение bge-m3 и 5 копий по фолдам на всех парах train (219 тыс. вместо 64 тыс., 3 × A100 на RunPod), бустинг переобучен", "0.9156, к сабмиту 4 +0.003 [−0.002; +0.008], в шуме; новых кандидатов ~23 вместо ~18, потолок 0.951; платформа 0.9041 (+0.008)", "in", "сабмит 5", "19_ltr_ft"]
+];
+(function(){
+  const EDA = {"00": "00_summary.md", "01": "01_queries.md", "02": "02_corpus_popularity.md", "03": "03_geography.md", "04": "04_text_filters.md", "05": "05_validation.md", "06": "06_sparse.md", "07": "07_dense.md", "08": "08_hybrid.md", "09": "09_lemma.md", "10": "10_geo.md", "11": "11_meta_boost.md", "12": "12_rerank.md", "13": "13_qwen_ensemble.md", "14": "14_errors.md", "15": "15_quality.md", "16": "16_ltr.md", "17": "17_finetune.md", "18": "18_ltr_big.md", "19": "19_ltr_ft.md"};   // номер отчёта -> файл в eda/
+  const tb = document.querySelector("#expTable tbody");
+  const label = {in: "вошло", out: "не вошло", info: "анализ", partial: "частично"};
+  let count = 0;
+  EXP.forEach(r => {
+    const tr = document.createElement("tr");
+    if (r.length === 1) { tr.className = "grp"; tr.dataset.grp = "1"; tr.innerHTML = `<td colspan="5">${r[0]}</td>`; }
+    else { count++; tr.dataset.kind = r[3]; tr.innerHTML = `<td>${r[0]}</td><td>${r[1]}</td><td class="res">${r[2]}</td><td><span class="pill ${r[3]}">${label[r[3]]}</span><div class="muted" style="font-size:12.5px;margin-top:4px">${r[4]}</div></td><td>${(r[5] || "").split(/,\s*/).filter(Boolean).map(x => EDA[x.slice(0, 2)] ? `<a href="../eda/${EDA[x.slice(0, 2)]}"><code>${x}</code></a>` : `<code>${x}</code>`).join(", ")}</td>`; }
+    tb.appendChild(tr);
+  });
+  document.getElementById("expCount").textContent = count;
+  const btns = document.querySelectorAll(".filters button");
+  function apply(f){
+    btns.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.f === f)));
+    const rows = [...tb.children]; let lastGrp = null, grpHas = false;
+    const flush = () => { if (lastGrp) lastGrp.hidden = !grpHas; };
+    rows.forEach(tr => {
+      if (tr.dataset.grp) { flush(); lastGrp = tr; grpHas = false; return; }
+      const k = tr.dataset.kind;
+      const show = f === "all" || k === f;
+      tr.hidden = !show; if (show) grpHas = true;
+    });
+    flush();
+    try { localStorage.setItem("expFilter", f); } catch (e) {}
+  }
+  btns.forEach(b => b.addEventListener("click", () => apply(b.dataset.f)));
+  let saved = "all"; try { saved = localStorage.getItem("expFilter") || "all"; } catch (e) {}
+  if (!["all", "in", "out"].includes(saved)) saved = "all";
+  apply(saved);
+})();
+})();
+</script>
+
+</body></html>
